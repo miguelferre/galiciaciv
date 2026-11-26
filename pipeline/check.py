@@ -60,7 +60,7 @@ ECON_KEYS = ["population", "employed", "yields", "jobs", "median_income", "media
 GROWTH_MAX = 0.25  # the pipeline nulls |growth| above this (see pipeline/build/growth.py)
 CITY_RANK_BASE = ["population", "gdp", "gdp_per_capita", "growth"]
 PEERS = 5
-COUNTY_FORMATS = (LENS_FORMATS - {"category"}) | {"text", "km2"}  # categorical county columns are "text"
+COUNTY_FORMATS = (LENS_FORMATS - {"category"}) | {"text", "km2", "signed"}  # categorical county columns are "text"
 COUNTY_TEXT = ["geoid", "name", "state", "city"]
 NOT_ADDITIVE: set[str] = set()  # resource types whose values cannot be summed (none on the Galician map)
 

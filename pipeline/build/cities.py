@@ -2,8 +2,8 @@
 
 Each city keeps its position x, y (centroid of its concello, IGN límites) and gets one land cell of
 Galicia for its banner: the most built-up part of its concello (see place_city). With 1 km hexes the
-centroid is often fields or hills, kilometres from the town. Growth is null: the pilot has no population series
-(IGE 589 has the years, a second fetch would be needed). A city is one concello, so `counties` has
+centroid is often fields or hills, kilometres from the town. Growth comes from the padrón series
+2021 to the padrón year (see growth.py). A city is one concello, so `counties` has
 one id, and `states` holds the fips of its comarca (the viewer's key).
 """
 
@@ -15,6 +15,7 @@ from ..core.geo import MapProjection
 from ..core.hexgrid import HexGrid
 from ..core.store import load_interim, load_interim_payload, write_web
 from .galicia import JOB_LABELS, comarca_tables, concello_info
+from .growth import Growth
 from .yields import GDP_YEAR, YIELDS, branch_affiliates, economy, industries, mean_income
 
 REQUIRES = ["_world", "ign_limites", "ige_comarcas", "ine_padron", "ige_pib", "ige_afiliacion", "ige_paro", "ine_adrh", "ige_ramas"]
@@ -148,6 +149,7 @@ def build() -> None:
     world = load_interim("_world")
     pad = load_interim_payload("ine_padron")
     pop = pad["data"]["by_concello"]
+    gro = Growth(pad["data"])
     pib_p, aff_p, paro_p = (load_interim_payload(n) for n in ("ige_pib", "ige_afiliacion", "ige_paro"))
     pib, aff, paro = pib_p["data"], aff_p["data"], paro_p["data"]
     renta = load_interim("ine_adrh")["by_concello"]
@@ -173,8 +175,8 @@ def build() -> None:
             **economy(p, aff["by_concello"].get(geoid), pib["by_concello"].get(geoid), clean_paro(paro, geoid),
                       income=mean_income([geoid], pop, renta),
                       branch=branch_affiliates(aff["by_concello"].get(geoid), ramas["by_concello"].get(geoid))),
-            "growth": None, "growth_years": None,
-            "counties": [geoid], "pop_series": None,
+            "growth": gro.concellos([geoid]), "growth_years": gro.years,
+            "counties": [geoid], "pop_series": gro.pop_series(geoid),
         })
     cities.sort(key=lambda c: -c["population"])
 
@@ -207,7 +209,7 @@ def build() -> None:
     nation = economy(pad["data"]["galicia_total"], nat_aff, pib["galicia_total"], paro["galicia_total"]["total"],
                      income=mean_income(list(pop), pop, renta),
                      branch=branch_affiliates(nat_aff, ramas["galicia"]))
-    nation["growth"], nation["growth_years"] = None, None
+    nation["growth"], nation["growth_years"] = gro.nation(), gro.years
     write_web("cities.json", cities)
     write_web(
         "nation.json",

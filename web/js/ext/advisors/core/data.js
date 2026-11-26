@@ -198,6 +198,7 @@ export function buildData(app) {
   // What states.json, cities.json and nation.json share.
   const placeValues = (o) => ({
     population: o.population ?? null,
+    growth: o.growth ?? null,
     gdp: o.gdp ?? null,
     gdp_pc: ratio(o.gdp, o.population),
     affiliates: o.employed ?? null,

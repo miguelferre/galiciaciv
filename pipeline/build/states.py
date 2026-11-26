@@ -20,6 +20,7 @@ from ..core.hexgrid import HexGrid
 from ..core.store import load_interim, write_web
 from .cities import clean_paro
 from .galicia import comarca_tables
+from .growth import Growth
 from .yields import YIELDS, branch_affiliates, economy, mean_income
 
 REQUIRES = ["_world", "ige_comarcas", "ine_padron", "ige_pib", "ige_afiliacion", "ige_paro", "ine_adrh", "ige_ramas"]
@@ -127,7 +128,8 @@ def land_shares(world: dict, s: int) -> dict | None:
 
 def build() -> None:
     world = load_interim("_world")
-    pop = load_interim("ine_padron")["by_concello"]
+    padron = load_interim("ine_padron")
+    pop, gro = padron["by_concello"], Growth(padron)
     pib = load_interim("ige_pib")["by_concello"]
     aff = load_interim("ige_afiliacion")["by_concello"]
     paro = load_interim("ige_paro")
@@ -161,7 +163,7 @@ def build() -> None:
             econ["unemployment"] = round(paro_sum / sum(pop[g] for g in with_paro), 4)
         states.append({
             "fips": fips, "abbr": com["abbr"], "name": com["name"], "province": com["province"],
-            **econ, "growth": None, "growth_years": None, "ranks": {},
+            **econ, "growth": gro.concellos(gs), "growth_years": gro.years, "ranks": {},
             "label": label_anchor(grid, owner, i, com["name"]),
             "land": land_shares(world, i),
         })

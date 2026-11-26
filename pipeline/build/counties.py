@@ -17,6 +17,7 @@ from ..core.paths import WEB_DATA
 from ..core.store import load_interim, write_web
 from .cities import nearest_land
 from .galicia import comarca_tables, concello_info
+from .growth import Growth
 from .lenses import concello_metrics
 
 REQUIRES = ["_world", "ign_limites", "ige_comarcas", "ine_padron", "ige_pib", "ige_afiliacion", "ige_paro",
@@ -75,6 +76,9 @@ def fields() -> list[dict]:
         _field("population", "Población", "int", "habitantes", "neutral", "ine_padron", "Población a 1 de enero de 2025 (padrón del INE, vía IGE 589)."),
         _field("land_km2", "Superficie", "km2", "km²", "neutral", "ign_limites", "Superficie del concello, calculada del contorno de los límites municipales del IGN (INSPIRE AU), antes de simplificarlo."),
         _field("density", "Densidad", "float", "habitantes por km²", "neutral", "ine_padron", "Población entre superficie."),
+        _field("growth", "Variación de la población", "signed", "variación 2021-2025", "neutral", "ine_padron",
+               "Población a 1 de enero de 2025 entre la de 2021, menos 1 (padrón del INE, vía IGE 589). Los límites "
+               "de los concellos no cambian en esos años."),
         _field("gdp", "PIB", "eur", "euros", "good", "ige_pib", "PIB de 2023 estimado por el IGE para el concello (tabla 9958)."),
         _field("gdp_pc", "PIB por habitante", "eur", "euros por habitante", "good", "ige_pib", "PIB de 2023 entre la población de 2025."),
         _field("affiliates", "Afiliados", "int", "personas", "neutral", "ige_afiliacion",
@@ -111,7 +115,8 @@ def fields() -> list[dict]:
 
 def build() -> None:
     world = load_interim("_world")
-    pop = load_interim("ine_padron")["by_concello"]
+    padron = load_interim("ine_padron")
+    pop, gro = padron["by_concello"], Growth(padron)
     aff = load_interim("ige_afiliacion")["by_concello"]
     info = concello_info()
     comarcas, comarca_of = comarca_tables()
@@ -154,6 +159,7 @@ def build() -> None:
         row = {
             "geoid": geoid, "name": g["name"], "state": comarcas[com]["name"], "province": g["province"],
             "population": p, "land_km2": round(g["area_km2"], 1), "density": round(p / g["area_km2"], 1),
+            "growth": gro.concellos([geoid]),
             "gdp": m["gdp"], "gdp_pc": round(m["gdp_pc"]) if m["gdp_pc"] is not None else None,
             "affiliates": a.get("total"),
             "agro": a.get("agro"), "industria": a.get("industria"),

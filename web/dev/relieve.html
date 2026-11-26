@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es-ES">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Prueba: Relieve 3D</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .dev-note { position: fixed; left: 16px; right: 16px; top: calc(var(--topbar-h) + 24px); max-width: 560px; }
+    .dev-note h1 { margin: 0 0 8px; font: normal 22px/1.25 var(--serif); color: var(--gold-bright); text-wrap: balance; }
+    .dev-note p { margin: 0 0 8px; color: var(--ink-dim); font-size: 15px; text-wrap: pretty; }
+    .dev-note code { color: var(--ink); }
+  </style>
+</head>
+<body>
+  <header id="topbar">
+    <div class="brand"><span class="brand-text">Prueba</span></div>
+    <div class="spacer"></div>
+    <div class="tb-buttons"></div>
+  </header>
+  <main class="dev-note">
+    <h1>Relieve 3D, sin el visor principal</h1>
+    <p>Esta página monta la extensión <code>web/js/ext/relief3d/</code> con un <code>app</code> mínimo. El botón de la barra
+      abre la vista. Escape la cierra.</p>
+    <p>Parámetros: <code>?cerrado</code> no la abre al cargar. <code>?lente=renta_pc&amp;exag=20&amp;detalle=normal</code> fija color,
+      altura y detalle. <code>lente=suelo</code> pone el color de suelo; sin él, la altitud.</p>
+    <p id="dev-status">Cargando los datos…</p>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module">
+    // The parts of main.js's `app` that the extension uses, built from the same modules.
+    import { prepareWorld } from "../js/world.js";
+    import { createEmitter, createModes, createUi } from "../js/app/api.js";
+    import { install } from "../js/ext/relief3d/index.js";
+
+    const status = document.getElementById("dev-status");
+    const load = async (name) => {
+      const r = await fetch(`../data/${name}.json`);
+      if (!r.ok) throw new Error(`data/${name}.json: HTTP ${r.status}`);
+      return r.json();
+    };
+
+    try {
+      const [world, cities, lenses, sources, states] = await Promise.all(
+        ["world", "cities", "lenses", "sources", "states"].map(load));
+      const events = createEmitter();
+      const app = {
+        w: prepareWorld(world, cities),
+        data: { world, cities, states, lenses, sources },
+        state: { lens: null, selectedCity: null, selectedState: null },
+        on: events.on, off: events.off, emit: events.emit,
+        requestDraw() {},
+      };
+      const modes = createModes(app);
+      Object.assign(app, { registerMode: modes.registerMode, setMode: modes.setMode, hasMode: modes.hasMode });
+      Object.defineProperty(app, "mode", { get: () => modes.mode });
+      const toast = document.getElementById("toast");
+      app.ui = createUi(app, { toast: (msg) => { toast.textContent = msg; toast.hidden = false; }, onLayout() {} });
+      window.__app = app;
+      install(app);
+      window.addEventListener("keydown", (e) => { if (e.key === "Escape") modes.escape(); }); // main.js does this
+
+      status.textContent = "Datos cargados. La extensión está instalada.";
+      const q = new URLSearchParams(location.search);
+      if (!q.has("cerrado") && (await app.relief3d.open())) {
+        if (q.get("detalle")) await app.relief3d.view.setDetail(q.get("detalle"));
+        if (q.get("lente")) app.relief3d.view.setLens(q.get("lente"));
+        if (q.get("exag")) app.relief3d.view.setExaggeration(q.get("exag"));
+      }
+    } catch (err) {
+      console.error(err);
+      status.textContent = `Error: ${err.message}. Sirve la carpeta web/ por HTTP.`;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+/* Relieve 3D (web/js/ext/relief3d). Loaded by the extension itself. Tokens follow the viewer's (css/style.css), with
+   fallbacks so the layer also works without it. Text uses two colours only; no opacity on text. */
+.r3d {
+  --r3d-ink: var(--ink, #efe4c6);
+  --r3d-muted: var(--ink-dim, #b9ab88);
+  --r3d-gold: var(--gold, #c9a45c);
+  --r3d-gold-bright: var(--gold-bright, #ecd08e);
+  --r3d-panel: var(--panel, rgba(16, 25, 35, .98));
+  --r3d-line: var(--line, rgba(201, 164, 92, .55));
+  --r3d-serif: var(--serif, "Palatino Linotype", Palatino, Georgia, serif);
+  --r3d-sans: var(--sans, -apple-system, "Segoe UI", system-ui, sans-serif);
+  --r3d-btn: linear-gradient(180deg, #3a5068, #223244);
+  --r3d-btn-hover: linear-gradient(180deg, #4a6584, #2b4057);
+  --r3d-sky: #081120;
+  --r3d-water: #6fd0fa;
+  --r3d-fast-in: 80ms;
+  --r3d-fast-out: 60ms;
+  position: fixed; inset: 0; z-index: 48; overflow: hidden; background: var(--r3d-sky);
+  color: var(--r3d-ink); font: 13px/1.45 var(--r3d-sans);
+}
+.r3d[hidden], .r3d [hidden] { display: none; }
+.r3d-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; outline: none; }
+.r3d-canvas:active { cursor: grabbing; }
+.r3d-canvas:focus-visible { box-shadow: inset 0 0 0 2px var(--r3d-gold-bright); }
+
+.r3d-head {
+  position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 14px; pointer-events: none;
+  padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
+}
+.r3d-head > * { pointer-events: auto; }
+.r3d-head h2 {
+  margin: 0; font: bold 14px/1.2 var(--r3d-serif); letter-spacing: .14em; text-transform: uppercase;
+  color: var(--r3d-gold-bright); text-shadow: 0 1px 4px #000; text-wrap: balance;
+}
+
+.r3d-btn {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer; min-height: 30px; padding: 4px 11px;
+  background: var(--r3d-btn); border: 1px solid var(--r3d-gold); border-radius: 4px;
+  font: 13px/18px var(--r3d-serif); color: var(--r3d-gold-bright); transition: background var(--r3d-fast-out);
+}
+.r3d-btn:hover { background: var(--r3d-btn-hover); transition-duration: var(--r3d-fast-in); }
+.r3d-btn:focus-visible, .r3d select:focus-visible, .r3d input:focus-visible, .r3d summary:focus-visible {
+  outline: 2px solid var(--r3d-gold-bright); outline-offset: 2px;
+}
+
+.r3d-panel {
+  position: absolute; top: calc(var(--r3d-head-h, 46px) + 4px); left: 12px; width: 280px;
+  max-height: calc(100% - var(--r3d-head-h, 46px) - 16px); overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; gap: 12px; padding: 12px 14px;
+  background: var(--r3d-panel); border: 1px solid var(--r3d-line); border-radius: 6px; box-shadow: 0 6px 24px rgba(0, 0, 0, .45);
+}
+.r3d-field { display: flex; flex-direction: column; gap: 4px; }
+.r3d-label { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--r3d-muted); font-size: 12px; }
+.r3d-label output { color: var(--r3d-gold-bright); font-weight: 600; font-size: 14px; }
+.r3d input[type="range"] { width: 100%; height: 24px; margin: 0; accent-color: var(--r3d-gold); }
+.r3d select {
+  width: 100%; min-height: 30px; padding: 3px 6px; font: 13px var(--r3d-sans); color: var(--r3d-ink);
+  background: #101a24; border: 1px solid var(--r3d-line); border-radius: 4px;
+}
+.r3d-num { font-variant-numeric: tabular-nums; }
+.r3d-note { margin: 0; color: var(--r3d-muted); font-size: 11.5px; text-wrap: pretty; }
+.r3d-muted { color: var(--r3d-muted); }
+
+.r3d summary { cursor: pointer; color: var(--r3d-muted); font-size: 12px; }
+.r3d-about { margin-top: 6px; }
+.r3d-legend-body p { margin: 6px 0 0; color: var(--r3d-muted); font-size: 11.5px; text-wrap: pretty; }
+.r3d-keys { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.r3d-keys li { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12px; }
+.r3d-keys i { flex: none; width: 14px; height: 12px; border-radius: 2px; border: 1px solid rgba(255, 255, 255, .25); }
+.r3d-ramp { height: 12px; margin-top: 8px; border-radius: 2px; border: 1px solid rgba(255, 255, 255, .2); }
+.r3d-ticks { display: flex; justify-content: space-between; gap: 6px; margin-top: 3px; font-size: 11px; }
+
+.r3d-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.r3d-checks { display: flex; flex-wrap: wrap; gap: 0 14px; }
+.r3d-check { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; cursor: pointer; font-size: 12px; }
+.r3d-check input { margin: 0; accent-color: var(--r3d-gold); }
+.r3d-hint { margin: 0; color: var(--r3d-muted); font-size: 11.5px; text-wrap: pretty; }
+.r3d-hint-touch { display: none; }
+@media (pointer: coarse) {
+  .r3d-hint-mouse { display: none; }
+  .r3d-hint-touch { display: block; }
+  .r3d-btn, .r3d select, .r3d-check { min-height: 38px; }
+  .r3d input[type="range"] { height: 32px; }
+}
+
+.r3d-mark { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.r3d-mark polygon { fill: rgba(255, 255, 255, .3); stroke: #fff; stroke-width: 1.5; stroke-linejoin: round; }
+.r3d-tip {
+  position: absolute; z-index: 2; max-width: 280px; pointer-events: none; padding: 6px 9px; font-size: 12px;
+  background: rgba(12, 18, 26, .96); border: 1px solid var(--r3d-line); border-radius: 4px;
+}
+.r3d-tip b { color: var(--r3d-gold-bright); font-family: var(--r3d-serif); }
+.r3d-river { color: var(--r3d-water); }
+.r3d-error {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(340px, calc(100% - 32px));
+  padding: 14px 16px; text-align: center; background: var(--r3d-panel); border: 1px solid var(--r3d-line); border-radius: 6px;
+}
+
+/* The top-bar button: icon plus "3D" where the viewer hides button labels, icon plus "Relieve 3D" on wide screens. */
+#btn-relief3d .r3d-glyph { flex: none; }
+#btn-relief3d .r3d-short { display: none; }
+@media (max-width: 1720px) { #btn-relief3d .r3d-short { display: inline; } }
+.r3d-float {
+  position: fixed; right: 12px; top: 12px; z-index: 12; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  padding: 6px 12px; border-radius: 4px; border: 1px solid #c9a45c; background: #223244; color: #ecd08e; font: 13px serif;
+}
+.r3d-float .r3d-short { display: none; }
+
+/* Phones upright: the controls become a sheet at the bottom; the map takes the rest. */
+@media (max-width: 700px) {
+  .r3d-head { gap: 10px; padding-left: 8px; padding-right: 8px; }
+  .r3d-panel {
+    top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 55%; gap: 8px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); border-width: 1px 0 0; border-radius: 10px 10px 0 0;
+  }
+  .r3d summary { padding: 4px 0; }
+  .r3d-hint { font-size: 11px; }
+}
+/* Phones on their side: too short for a sheet, so a narrower column on the left. */
+@media (min-width: 701px) and (max-height: 500px) {
+  .r3d-panel { width: 250px; gap: 8px; padding: 8px 12px; }
+  .r3d-hint { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .r3d-btn { transition: none; } }

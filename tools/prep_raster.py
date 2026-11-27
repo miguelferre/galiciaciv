@@ -96,7 +96,7 @@ def relief() -> None:
     fill = np.array([np.interp(lats, elat, by_row[:, j]) for j in range(len(lons))]).T
     alt = np.where(mdt, alt, np.rint(fill).astype(np.int32))
     n_mdt = int(mdt.sum())
-    out = {"vintage": "IGN MDT 200 m (land, Spain) + ETOPO1 (sea, Portugal) interpolated to the MDT pixels (~0.15 x 0.20 km)",
+    out = {"vintage": "IGN MDT 200 m (tierra, España) + ETOPO1 (mar y Portugal) interpolado a los píxeles del MDT (~0,15 x 0,20 km)",
            "n_mdt": n_mdt, "n_etopo": int(alt.size) - n_mdt, "x0": float(lons[0]), "dx": float(t.a),
            "y0": float(lats[0]), "dy": float(t.e), "cols": len(lons), "rows_n": len(lats), "rows": alt.tolist()}
     (MDT_DIR / "relief_grid.json").write_text(json.dumps(out, separators=(",", ":")))
@@ -132,7 +132,7 @@ def cover() -> None:
     # sea outside any tile data is 0 already ("no data"); water (80) -> 11
     chars = np.array([LEGEND.get(i, ".") for i in range(256)])
     text = ["".join(chars[g]) for g in grid]
-    out = {"vintage": "ESA WorldCover 2021 v200 (10 m), nearest neighbour to ~0.2 km", "crs": "EPSG:4326",
+    out = {"vintage": "ESA WorldCover 2021 v200 (10 m), vecino más próximo a ~0,2 km", "crs": "EPSG:4326",
            "x0": x0, "dx": DX, "y0": y0, "dy": -DY, "cols": cols, "rows_n": rows,
            "legend": {ch: code for code, ch in LEGEND.items()}, "mapping": {str(k): v for k, v in MAPPING.items()},
            "rows": text}

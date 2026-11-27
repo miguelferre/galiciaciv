@@ -508,7 +508,21 @@ async function main() {
     requestAnimationFrame(() => { minimapQueued = false; minimap.rebuild(); });
   };
 
+  // A #lens= id that no lens in lenses.json has (an extension's lens, e.g. an advisor's): kept until a resolver
+  // registered with app.registerLensResolver(fn) builds it, or until the viewer picks another lens.
+  let pendingLens = null;
+  const lensResolvers = [];
+  async function resolvePending(id) {
+    for (const fn of lensResolvers) {
+      let lens = null;
+      try { lens = await fn(id); } catch (err) { console.error("lens resolver failed", err); }
+      if (pendingLens !== id) return;
+      if (lens) { setLens(lens); return; } // not app.setLens: an extension lens takes no quick slot
+    }
+  }
+
   function setLens(lens) {
+    pendingLens = null;
     const changed = lens !== state.lens;
     state.lens = lens;
     state.band = null;
@@ -620,7 +634,7 @@ async function main() {
           state: stateHashRef && stateHashRef.idx === state.selectedState ? stateHashRef.raw : w.raw.states[state.selectedState]?.fips,
         } : {};
       return {
-        lens: state.lens?.id || null,
+        lens: state.lens?.id || pendingLens || null,
         ...sel,
         // at = [x km, y km, log2(scale / home-fit scale)]; during a flight, where it will land.
         at: userMoved ? (cam.flight ? [cam.flight.x1, cam.flight.y1, Math.log2(cam.flight.s1 / fitScale())]
@@ -629,8 +643,11 @@ async function main() {
     },
     apply(p, { initial }) {
       const lens = p.lens ? lensById.get(p.lens) || null : null;
-      if (lens !== state.lens || state.band) setLens(lens);
+      const keep = !lens && p.lens && state.lens?.id === p.lens; // an extension's lens already on the map
+      if (!keep && (lens !== state.lens || state.band)) setLens(lens);
       if (lens) dock.remember(lens.id);
+      pendingLens = !lens && !keep && p.lens ? p.lens : null;
+      if (pendingLens) resolvePending(pendingLens);
       const city = p.city ? cities.find((c) => c.id === p.city) : null;
       const sIdx = p.state ? stateFromHash(p.state) : -1;
       stateHashRef = sIdx >= 0 ? { idx: sIdx, raw: p.state } : null;
@@ -819,6 +836,7 @@ async function main() {
 
   document.getElementById("btn-help").onclick = () => help.toggle();
   document.getElementById("btn-pedia").onclick = () => pedia.open();
+  document.querySelector("#credits [data-pedia]")?.addEventListener("click", () => pedia.open("Sources"));
 
   // --- resources toggle + minimap toggle -------------------------------------------------------------------------
   const resBtn = document.getElementById("btn-res");
@@ -1226,6 +1244,13 @@ async function main() {
       if (lens && !modes.mode) dock.remember(lens.id);
     },
     setBand,
+    /** fn(id) → lens | null | Promise: builds a lens that lenses.json does not have, for a #lens= link. */
+    registerLensResolver(fn) {
+      lensResolvers.push(fn);
+      if (pendingLens) resolvePending(pendingLens);
+    },
+    /** The #lens= id still waiting for its resolver, or null. */
+    get pendingLens() { return pendingLens; },
     flyTo(x, y, scale = cam.scale, ms = 750) { flyToVisible(x, y, scale, ms); },
     fitBounds,
     home() { const h = homeView(); cam.flyTo(h.x, h.y, h.s, 750); userMoved = false; requestDraw(); },

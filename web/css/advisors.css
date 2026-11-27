@@ -407,3 +407,8 @@ body.adv-tip-on #tooltip { display: none !important; }
   body.adv-on #minimap-wrap { display: none; }
   body.adv-on #lens-area { left: calc(12px + var(--dock-left, 0px)); }
 }
+
+.adv-fire-ctl { display: flex; align-items: center; gap: 8px; margin: 8px 0 4px; }
+.adv-fire-ctl input[type=range] { flex: 1; min-width: 0; accent-color: var(--gold); }
+.adv-fire-year { min-width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); font-size: 12.5px; }
+.adv-fire-line { font-variant-numeric: tabular-nums; }

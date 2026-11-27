@@ -32,21 +32,22 @@ TIDAL_SEA_SHARE = 0.5  # share of elevation samples below 0 m that keeps a sea-c
 LAKE_MIN_POINTS = 3
 COAST_DEPTH_M = -200
 WATER_TABLE = [
-    {"id": LAND, "name": "Land", "rule": "At least 4 of the hex's 7 sample points (centre + 6) fall on a Galician concello or on a neighbouring land outline (Asturias, León, Zamora, Portugal), unless the centre is sea and the elevation mean is at or below sea level, or at least half its samples are (the rías stay water)."},
-    {"id": OCEAN, "name": "Ocean", "color": "#1b4266", "rule": "Sea deeper than 200 m and not next to land."},
-    {"id": COAST, "name": "Coast", "color": "#2d6d97", "rule": "Sea next to a land hex, or shallower than 200 m (ETOPO1 mean; the Atlantic and Cantabrian coasts)."},
-    {"id": LAKE, "name": "Lake", "color": "#3a80b0", "rule": f"At least {LAKE_MIN_POINTS} of the 7 sample points on an OpenStreetMap reservoir or lake (≥ 2 km²), above sea level; or a water hex (most of its points off land) with lake points that outnumber sea points, or above sea level."},
+    {"id": LAND, "name": "Tierra", "rule": "Al menos 4 de los 7 puntos de muestra de la casilla (centro + 6) caen en un concello gallego o en el contorno de una tierra vecina (Asturias, León, Zamora, Portugal), salvo que el centro sea mar y la altitud media esté a nivel del mar o por debajo, o lo estén al menos la mitad de sus muestras (las rías siguen como agua)."},
+    {"id": OCEAN, "name": "Océano", "color": "#1b4266", "rule": "Mar de más de 200 m de profundidad y sin tierra al lado."},
+    {"id": COAST, "name": "Costa", "color": "#2d6d97", "rule": "Mar junto a una casilla de tierra, o de menos de 200 m de profundidad (media de ETOPO1; costas atlántica y cantábrica)."},
+    {"id": LAKE, "name": "Lago", "color": "#3a80b0", "rule": f"Al menos {LAKE_MIN_POINTS} de los 7 puntos de muestra sobre un embalse o lago de OpenStreetMap (≥ 2 km²), por encima del nivel del mar; o una casilla de agua (la mayoría de sus puntos fuera de tierra) con más puntos de lago que de mar, o por encima del nivel del mar."},
 ]
 
 WATER_NOTE = (
-    "IGN municipal outlines (Galicia) and provincial outlines (Asturias, León, Zamora) come from one service, so borders meet; "
-    "Portugal is Natural Earth 1:10m. The coast is the concellos' coastline. A water hex whose centre lies on a land outline, whose elevation mean is above "
-    "sea level (and under half of its samples below it) becomes land when at least 4 of its 6 neighbours are land, or when "
-    "it touches both Galician and foreign land; it takes the neighbours' majority owner. A hex whose centre is off every "
-    "outline is sea: the elevation of the sea is too coarse to overrule the coastline. The rías stay water when the hex centre is sea and its mean is at or "
-    "below sea level, or at least half of its samples are. A sea hex's elevation is the mean of its samples (ETOPO1, "
-    "interpolated) below sea level (its water depth). Reservoirs and lakes of at least 2 km² (OpenStreetMap) are water "
-    f"where at least {LAKE_MIN_POINTS} of a hex's 7 sample points fall on them."
+    "Los contornos de los concellos (Galicia) y de las provincias de Asturias, León y Zamora son del IGN y salen de un mismo "
+    "servicio, así que las fronteras encajan; Portugal es Natural Earth 1:10m. La costa es la línea de costa de los concellos. Una "
+    "casilla de agua con el centro sobre un contorno de tierra y altitud media sobre el nivel del mar (con menos de la mitad de sus "
+    "muestras por debajo) pasa a tierra si al menos 4 de sus 6 vecinas son tierra, o si toca tierra gallega y extranjera a la vez; "
+    "toma el dueño de la mayoría de las vecinas. Una casilla con el centro fuera de todo contorno es mar: la altitud del mar es "
+    "demasiado gruesa para corregir la línea de costa. Las rías siguen como agua si el centro de la casilla es mar y su media está "
+    "a nivel del mar o por debajo, o lo están al menos la mitad de sus muestras. La altitud de una casilla de mar es la media de "
+    "sus muestras (ETOPO1, interpolado) bajo el nivel del mar (su profundidad). Los embalses y lagos de al menos 2 km² "
+    f"(OpenStreetMap) son agua donde al menos {LAKE_MIN_POINTS} de los 7 puntos de muestra de una casilla caen sobre ellos."
 )
 
 FLAT, HILLS, MOUNTAINS, PEAKS = range(4)
@@ -55,36 +56,37 @@ FLAT, HILLS, MOUNTAINS, PEAKS = range(4)
 HILLS_STD_M, MOUNTAIN_STD_M, MOUNTAIN_MEAN_M, PEAKS_MEAN_M = 31, 85, 900, 1200
 LAND_MIN_ALT_M = -5  # samples below this inside a land hex are sea floor (ETOPO1); the MDT's lowest land is -6 m
 RELIEF_TABLE = [
-    {"id": FLAT, "name": "Flat", "rule": f"Elevation standard deviation inside the hex under {HILLS_STD_M} m."},
-    {"id": HILLS, "name": "Hills", "rule": f"Elevation standard deviation ≥ {HILLS_STD_M} m."},
-    {"id": MOUNTAINS, "name": "Mountains", "rule": f"Elevation standard deviation ≥ {MOUNTAIN_STD_M} m, or mean elevation ≥ {MOUNTAIN_MEAN_M} m."},
-    {"id": PEAKS, "name": "Peaks", "rule": f"Mean elevation ≥ {PEAKS_MEAN_M:,} m (high mountain: Trevinca, Courel, Ancares)."},
+    {"id": FLAT, "name": "Llano", "rule": f"Desviación típica de la altitud dentro de la casilla menor de {HILLS_STD_M} m."},
+    {"id": HILLS, "name": "Colinas", "rule": f"Desviación típica de la altitud ≥ {HILLS_STD_M} m."},
+    {"id": MOUNTAINS, "name": "Montaña", "rule": f"Desviación típica de la altitud ≥ {MOUNTAIN_STD_M} m, o altitud media ≥ {MOUNTAIN_MEAN_M} m."},
+    {"id": PEAKS, "name": "Cumbres", "rule": f"Altitud media ≥ {PEAKS_MEAN_M} m (alta montaña: Trevinca, Courel, Ancares)."},
 ]
 RELIEF_NOTE = (
-    "From IGN MDT 200 m samples (~0.15 × 0.2 km, about 85 per hex) with altitude ≥ -5 m, so rías and sea floor don't "
-    "count; all samples are used if none qualify. Water hexes are always flat."
+    "Sale de las muestras del MDT 200 m del IGN (~0,15 × 0,2 km, unas 85 por casilla) con altitud ≥ -5 m, para que no cuenten "
+    "las rías ni el fondo del mar; si ninguna cumple, se usan todas. Las casillas de agua son siempre llanas."
 )
 
 URBAN_MIN_PCT = 15  # share of built-up land that makes a 2.6 km² hex urban: 2.5 % of the Galician hexes, as in the pilot
 # id, key, name, colour, NLCD codes, rule. Ids are fixed by docs/DATA_CONTRACTS.md.
 COVER = [
-    (1, "forest_deciduous", "Deciduous forest", "#4f7a35", [41], "Forest (41+42+43) is the largest group and deciduous (41) the largest forest type."),
-    (2, "forest_evergreen", "Conifer forest", "#2f5a3a", [42], "Forest is the largest group and evergreen (42) the largest forest type."),
-    (3, "forest_mixed", "Mixed forest", "#43703f", [43], "Forest is the largest group and mixed (43) the largest forest type."),
-    (4, "scrub", "Scrub & desert", "#c9b07a", [52], "Shrub/scrub (52) is the largest group: deserts, chaparral, sagebrush."),
-    (5, "grassland", "Grassland", "#a9b35a", [71, 21], "Grassland/herbaceous (71) plus developed open space (21: lawns, parks) is the largest group."),
-    (6, "pasture", "Pasture", "#8fb04e", [81], "Pasture/hay (81) is the largest group."),
-    (7, "cropland", "Cropland", "#c2b84e", [82], "Cultivated crops (82) is the largest group."),
-    (8, "wetland", "Wetland", "#4f8a6e", [90, 95], "Woody (90) plus emergent herbaceous (95) wetlands is the largest group."),
-    (9, "urban", "Urban", "#8a8378", [22, 23, 24], f"Developed low/medium/high intensity (22+23+24) is ≥ {URBAN_MIN_PCT}% of the hex's land, whatever else is there."),
-    (10, "barren", "Barren", "#bfae95", [31], "Barren land (31: rock, sand, playa) is the largest group."),
-    (11, "ice", "Ice & snow", "#e8eef2", [12], "Perennial ice/snow (12) is the largest group."),
+    (1, "forest_deciduous", "Bosque caducifolio", "#4f7a35", [41], "El bosque (41+42+43) es el grupo mayor y el caducifolio (41) el tipo de bosque mayor."),
+    (2, "forest_evergreen", "Bosque de coníferas", "#2f5a3a", [42], "El bosque es el grupo mayor y el perennifolio (42) el tipo de bosque mayor."),
+    (3, "forest_mixed", "Bosque mixto", "#43703f", [43], "El bosque es el grupo mayor y el mixto (43) el tipo de bosque mayor."),
+    (4, "scrub", "Matorral", "#c9b07a", [52], "El matorral (52) es el grupo mayor: tojo, brezo y monte bajo."),
+    (5, "grassland", "Herbazal", "#a9b35a", [71, 21], "El herbazal (71) más el espacio abierto urbanizado (21: céspedes, parques) es el grupo mayor."),
+    (6, "pasture", "Prado", "#8fb04e", [81], "El prado de siega o pasto (81) es el grupo mayor."),
+    (7, "cropland", "Cultivo", "#c2b84e", [82], "Los cultivos (82) son el grupo mayor."),
+    (8, "wetland", "Humedal", "#4f8a6e", [90, 95], "Los humedales leñosos (90) más los herbáceos (95) son el grupo mayor."),
+    (9, "urban", "Urbano", "#8a8378", [22, 23, 24], f"Lo construido de intensidad baja, media o alta (22+23+24) es ≥ {URBAN_MIN_PCT} % de la tierra de la casilla, haya lo que haya además."),
+    (10, "barren", "Suelo desnudo", "#bfae95", [31], "El suelo desnudo (31: roca, arena, playa) es el grupo mayor."),
+    (11, "ice", "Hielo y nieve", "#e8eef2", [12], "El hielo o la nieve permanentes (12) son el grupo mayor."),
 ]
 COVER_NOTE = (
-    "From ESA WorldCover 2021 (10 m), sampled on a 0.2 km lattice inside each Galician hex (about 65 points). Open water (11) "
-    "and no-data pixels are ignored; shares are of the remaining land points, rounded to whole percent, and the urban "
-    "threshold is applied to the rounded developed share. WorldCover does not tell oak from pine or eucalyptus, so all "
-    "tree cover is mixed forest, and WorldCover's grassland (mostly Galician prados) is read as pasture. Foreign hexes have cover 0 (none)."
+    "Sale de ESA WorldCover 2021 (10 m), muestreado en una red de 0,2 km dentro de cada casilla gallega (unos 65 puntos). Se "
+    "ignoran el agua (11) y los píxeles sin dato; las partes son de los puntos de tierra restantes, redondeadas a enteros, y el "
+    "umbral urbano se aplica a la parte construida ya redondeada. WorldCover no distingue el roble del pino ni del eucalipto, así "
+    "que todo el arbolado es bosque mixto, y su herbazal (casi todo prados gallegos) se lee como prado. Las casillas de fuera "
+    "tienen cobertura 0 (ninguna)."
 )
 # Groups competing for the dominant cover (urban is decided by its threshold first).
 GROUPS = {
@@ -509,7 +511,7 @@ def build() -> None:
             if len(pts) >= 2:
                 rivers.append({"name": name, "rank": rank, "pts": [round(v, 1) for p in pts for v in p]})
 
-    cover_table = [{"id": 0, "key": "none", "name": "None", "rule": "Water, foreign land, or no land-cover pixels."}] + [
+    cover_table = [{"id": 0, "key": "none", "name": "Ninguna", "rule": "Agua, tierra de fuera de Galicia o sin píxeles de cobertura."}] + [
         {"id": cid, "key": key, "name": name, "color": color, "nlcd": codes, "rule": rule}
         for cid, key, name, color, codes, rule in COVER
     ]

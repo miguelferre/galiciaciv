@@ -21,7 +21,7 @@ from .growth import Growth
 from .lenses import concello_metrics
 
 REQUIRES = ["_world", "ign_limites", "ige_comarcas", "ine_padron", "ige_pib", "ige_afiliacion", "ige_paro",
-            "ine_adrh", "ige_poboacion", "ige_censo", "cities.json", "lenses.json"]
+            "ine_adrh", "ige_poboacion", "ige_censo", "cities.json", "lenses.json", "camino.json"]
 PRODUCES = ["counties.json"]
 
 LAND = {  # output key -> (world pct key, label, description)
@@ -105,6 +105,9 @@ def fields() -> list[dict]:
         out.append(_field(key, label, fmt, unit, "neutral", "meteogalicia", desc + ". En blanco si ninguna muestra cae en el concello."))
     for key, (_, label, desc) in LAND.items():
         out.append(_field(key, label, "pct", "parte de la superficie", "neutral", "worldcover", desc + LAND_NOTE))
+    out.append(_field("camino_km", "Km de Camino de Santiago", "float", "km dentro del concello", "neutral", "ign_camino",
+                      "Kilómetros de Caminos de Santiago dentro del concello (IGN-CNIG, datos de la FEAACS), con los tramos "
+                      "que comparten varios Caminos contados una vez. 0 si ningún Camino pasa por el concello."))
     out.append(_field("city", "Ciudad", "text", None, "neutral", "ine_padron",
                       "Identificador en cities.json si el concello tiene 10 000 habitantes o más; si no, en blanco."))
     out.append(_field("cell", "Casilla del mapa", "int", None, "neutral", "ign_limites",
@@ -126,6 +129,7 @@ def build() -> None:
     proj, grid = MapProjection(**world["projection"]), HexGrid(**world["grid"])
     state_idx = {fips: k for k, fips in enumerate(world["states"])}
     metrics = concello_metrics(world["counties"])
+    camino = json.loads((WEB_DATA / "camino.json").read_text(encoding="utf-8"))["by_concello"]
 
     # Per concello: cells its samples fall in (one count per sample) -> land shares and climate.
     acc = [Counter() for _ in world["counties"]]
@@ -172,6 +176,7 @@ def build() -> None:
             **{key: (_round(m[key], 4 if PER_CONCELLO[key][1] == "pct" else 0 if key == "renta_pc" else 2)
                      if m[key] is not None else None) for key in PER_CONCELLO},
             **{key: (round(acc[k][key] / n[k] / 100, 4) if n[k] else None) for key in LAND},
+            "camino_km": camino.get(geoid, {}).get("km", 0),
             "city": geoid if geoid in city_ids else None,
             "cell": cell if cell >= 0 else None,
         }

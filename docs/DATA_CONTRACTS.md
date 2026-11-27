@@ -370,6 +370,42 @@ Viajes de personas entre comarcas (MITMA, **un solo día laborable**, 12 de marz
   la del concello más poblado.
 * `check`: zonas y anclas, `trips` = ida + vuelta, propósitos, `path` entre anclas por vecinas, `rank` y pares únicos.
 
+## camino.json (al encender la capa «Camino de Santiago»)
+
+```
+{ version: 1,
+  vintage: "IGN-CNIG, Caminos de Santiago (FEAACS), consulta del 2026-11-27",
+  sources: ["ign_camino"],
+  attribution: "Caminos de Santiago: CC-BY 4.0 FEAACS, vía IGN-CNIG",
+  rule: "texto del método",
+  total_km: 1805.6,                 // sin contar dos veces lo compartido
+  routes: [{ id: "ES01c", name: "Camino Francés", full_name: "...nombre del IGN",
+             color: "#f2c14e", km_galicia: 205.3 }],   // orden por id
+  lines:  [{ routes: ["ES01c","ES03a"], pts: [x0,y0,x1,y1,...] }],  // km del mapa, 2 decimales
+  by_concello: { "15078": { km: 60.0, routes: ["ES01c", ...] } } }  // código INE de 5 cifras; solo concellos con km > 0
+```
+
+`check()` valida: claves, version 1, rutas con km, líneas con rutas conocidas y puntos pares, concellos conocidos, puntos dentro del mapa, suma por concello igual a `total_km` (±1 km).
+
+## fires.json (al abrir el asesor Territorio)
+
+```
+{
+  "version": 1,
+  "vintage": "<texto de la fuente EFFIS>",
+  "sources": ["effis"],
+  "years": [2016, ..., 2025],
+  "by_year": [{"n": int, "ha": int, "cells_touched": int}, ...],   // una por año, mismo orden
+  "cells": [ [[cell, share], ...], ... ]                          // una lista por año
+}
+```
+
+- `n`, `ha`: perímetros y hectáreas del año, iguales a `by_year` del interim `effis` (ha redondeadas).
+- `cells[k]`: casillas de tierra gallega (`owner >= 0`) con parte quemada en el año `years[k]`; `cell` es índice de la malla (0 <= cell < cols*rows); `share` en [0.001, 1], 3 decimales; las casillas bajo 0.001 no se guardan.
+- `cells_touched == len(cells[k])`.
+- Los perímetros de un año se unen antes de repartir: un fuego solapado cuenta una vez dentro del año. Entre años no hay unión.
+- Builder: REQUIRES `_world`, `effis`; PRODUCES `fires.json`.
+
 ## sources.json
 Bibliografía generada por `build/catalog.py` desde el registro de fuentes y sus manifiestos (hoy 28).
 ```jsonc

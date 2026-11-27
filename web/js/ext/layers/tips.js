@@ -58,6 +58,18 @@ export const tips = {
     if (rule?.text) lines.push(muted(esc(rule.text)));
     return lines.join("<br>");
   },
+  // Hover on a Camino line: its name(s) and the km of Camino inside the concello under the pointer (shared stretches counted once).
+  camino(l, m, x, y) {
+    const names = l.routes.map((id) => m.camino?.routes.get(id)?.name || id);
+    const lines = [`<b>${names.map(esc).join(" · ")}</b>`];
+    const raw = m.w.raw, grid = m.w.grid;
+    const cell = x != null ? grid.cellAt(x, y) : -1;
+    const ci = cell >= 0 ? raw.county[cell] : -1;
+    const row = ci >= 0 ? m.camino?.byConcello[raw.counties[ci].geoid] : null;
+    if (row) lines.push(`${dec(row.km)} km de Camino en ${esc(raw.counties[ci].name)}`);
+    lines.push(muted(esc(m.data.camino?.attribution || "")));
+    return lines.join("<br>");
+  },
   route(rt, m) {
     const r = rt.route;
     const t = m.data.trade || {};

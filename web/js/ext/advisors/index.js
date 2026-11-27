@@ -7,6 +7,7 @@
 // ctx = {app, data, el, link, params, on(name, fn), bubbles(id, opts), tip, setResourceFilter, setShowResources,
 //        switchTo(id, params)} — everything registered through ctx is undone when the view goes away.
 import { buildData } from "./core/data.js";
+import { lensFromId } from "./core/lenses.js";
 import { createLinker, createBubbles, createMapTip } from "./core/link.js";
 import { emblem } from "./core/emblems.js";
 import { frameNation } from "./core/frame.js";
@@ -21,7 +22,7 @@ export const ADVISORS = [
   { id: "knowledge", name: "Conocimiento", role: "Academia real", color: "#4a86d6", dark: "#0a1c3a", blurb: "Estudios, ocupaciones y la rama más cercana al trabajo científico.", load: () => import("./views/knowledge.js") },
   { id: "land", name: "Territorio", role: "Agrimensura mayor", color: "#6e9a3c", dark: "#18280a", blurb: "Suelo, clima, incendios y zonas inundables.", load: () => import("./views/land.js") },
   { id: "commerce", name: "Comercio", role: "Maestría del comercio", color: "#2fa4b8", dark: "#062630", blurb: "Un día de viajes entre comarcas, los puertos, los aeropuertos y las vías.", load: () => import("./views/commerce.js") },
-  { id: "culture", name: "Cultura", role: "Custodia de las maravillas", color: "#c25b9a", dark: "#2e0c22", blurb: "Patrimonio Mundial, bienes de interés cultural y el parque nacional.", load: () => import("./views/culture.js") },
+  { id: "culture", name: "Cultura", role: "Custodia de las maravillas", color: "#c25b9a", dark: "#2e0c22", blurb: "Patrimonio Mundial, bienes de interés cultural, el parque nacional y el Camino de Santiago.", load: () => import("./views/culture.js") },
   { id: "explorer", name: "Explorador", role: "Cartografía", color: "#9a7bc9", dark: "#1e1236", blurb: "Cruza las cifras como quieras: nivel, columnas y gráfico.", load: () => import("./views/explorer.js") },
 ];
 const byId = new Map(ADVISORS.map((a) => [a.id, a]));
@@ -338,6 +339,9 @@ export function install(app) {
       } else if (app.mode === "advisor") app.setMode(null);
     },
   });
+
+  // Advisor lenses in a shared link (#lens=adv-...): build the data, then the lens.
+  app.registerLensResolver?.(async (id) => (String(id).startsWith("adv-") ? lensFromId(await ensureData(), id) : null));
 
   app.advisors = { list: ADVISORS, open: (id, params) => switchTo(id, params), get current() { return current; }, data: () => data, ensureData };
 }

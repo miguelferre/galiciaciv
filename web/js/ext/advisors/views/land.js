@@ -4,6 +4,7 @@ import { pct, int, dec } from "../core/fmt.js";
 import { shareBar, barList, donut, histogram, smallMultiples } from "../core/charts.js";
 import { createTable } from "../core/table.js";
 import { section, tiles, segmented, lensButton, sourcesHtml, topBy, frameBtn } from "../core/view.js";
+import { fireYearLens } from "../core/lenses.js";
 import { LAND_KEYS, LAND_LABEL, LAND_COLOR, rowsHighlight } from "../core/data.js";
 
 const LENS_OF = { forest: "forest", crop: "farmland", pasture: "farmland", developed: "developed" };
@@ -300,6 +301,107 @@ export function mount(ctx) {
   drawWeather(true);
   followHistogram(() => ({ hist: weatherHist, values: valuesOf(variable.key) }));
 
+  /** "Incendios, año a año": hectares per year, a slider and a play button. The chosen year colours the map. */
+  function fireTimeline(parent) {
+    parent.insertAdjacentHTML("beforeend", `<h4 class="adv-h4">Incendios, año a año</h4>
+      <p class="adv-note">Elige un año para ver en el mapa lo que ardió entonces. EFFIS cartografía los incendios desde unas 30 ha: los más pequeños no salen. Quedan fuera los que EFFIS sitúa en León, Asturias o Portugal.</p>`);
+    const host = div(parent, "adv-fireyears");
+    host.innerHTML = `<p class="adv-empty">Cargando los años…</p>`;
+    let fires = null, year = null, timer = 0, gone = false;
+    let ui = null;
+    let wanted = null; // a year asked for by the link before the file arrived
+
+    const stop = () => {
+      if (!timer) return;
+      clearInterval(timer);
+      timer = 0;
+      ui?.play.setAttribute("aria-pressed", "false");
+      if (ui) ui.play.textContent = "Reproducir";
+    };
+    function select(y) {
+      if (!fires || !fires.years.includes(y)) return;
+      const lens = fireYearLens(data, fires, y);
+      if (!lens) return;
+      year = y;
+      show();
+      ctx.setLens(lens);
+    }
+    // Paint the controls for the current year without touching the map.
+    function show() {
+      if (!ui) return;
+      const k = fires.years.indexOf(year);
+      ui.range.value = String(year ?? fires.years[fires.years.length - 1]);
+      ui.label.textContent = year == null ? "Sin año" : String(year);
+      ui.bars.setSelected(year == null ? null : String(year));
+      if (k < 0) { ui.line.textContent = "Elige un año con la barra, el control o Reproducir."; return; }
+      const b = fires.by_year[k];
+      ui.line.textContent = `${int(b.n)} perímetros, ${int(b.ha)} ha, ${int(b.cells_touched)} casillas`;
+    }
+    function play() {
+      if (timer) return stop();
+      const ys = fires.years;
+      let k = year == null ? -1 : ys.indexOf(year);
+      if (k < 0 || k >= ys.length - 1) k = -1;
+      const step = () => {
+        k++;
+        select(ys[k]);
+        if (k >= ys.length - 1) stop();
+      };
+      step();
+      if (k >= ys.length - 1) return;
+      const slow = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      ui.play.setAttribute("aria-pressed", "true");
+      ui.play.textContent = "Parar";
+      timer = setInterval(step, slow ? 2000 : 1000);
+    }
+
+    const unregister = app.hash.register("fireyear", {
+      get: () => (year != null && app.state.lens?.id === `adv-fire-${year}` ? String(year) : null),
+      set(v) {
+        const y = Number(v);
+        if (!v) { wanted = null; stop(); if (year != null) { year = null; show(); } return; }
+        if (!fires) { wanted = y; return; }
+        stop();
+        select(y);
+      },
+    });
+    // The map may already show a fire-year lens (a #lens= link, or the dock): follow it.
+    const follow = () => {
+      const m = /^adv-fire-(\d{4})$/.exec(app.state.lens?.id || "");
+      const y = m ? Number(m[1]) : null;
+      if (!fires) { if (y) wanted = y; return; }
+      if (y !== year && (y == null || fires.years.includes(y))) { year = y; show(); }
+    };
+    ctx.on("lens", follow);
+    // Any click in the view stops the play, except on its own button.
+    const onClick = (e) => { if (!e.target.closest("[data-fire-play]")) stop(); };
+    el.addEventListener("click", onClick, true);
+    ctx.cleanup(() => { gone = true; stop(); unregister(); el.removeEventListener("click", onClick, true); });
+
+    app.loadData("fires").catch(() => null).then((f) => {
+      if (gone) return;
+      if (!f?.years?.length) { host.innerHTML = `<p class="adv-empty">No se han podido cargar los datos año a año.</p>`; return; }
+      fires = f;
+      host.innerHTML = "";
+      const first = f.years[0], last = f.years[f.years.length - 1];
+      const bars = barList(host, {
+        compact: true, ariaLabel: "Hectáreas quemadas por año",
+        rows: f.years.map((y, k) => ({ key: String(y), label: String(y), value: f.by_year[k].ha, text: `${int(f.by_year[k].ha)} ha`, color: FIRE })),
+        onClick: (r) => { stop(); select(Number(r.key)); },
+      });
+      const ctl = div(host, "adv-fire-ctl");
+      ctl.innerHTML = `<button type="button" class="adv-mini" data-fire-play aria-pressed="false">Reproducir</button>
+        <input type="range" min="${first}" max="${last}" step="1" value="${last}" aria-label="Año de los incendios">
+        <output class="adv-fire-year" aria-live="polite"></output>`;
+      ui = { bars, range: ctl.querySelector("input"), label: ctl.querySelector("output"), play: ctl.querySelector("button"), line: div(host, "adv-brushinfo adv-fire-line") };
+      ui.play.addEventListener("click", play);
+      ui.range.addEventListener("input", () => { stop(); select(Number(ui.range.value)); });
+      follow();
+      if (wanted != null) { const y = wanted; wanted = null; if (y !== year) select(y); }
+      show();
+    });
+  }
+
   // --- fire -----------------------------------------------------------------------------------------------------
   const burned = valuesOf("incendios");
   if (burned) {
@@ -337,6 +439,7 @@ export function mount(ctx) {
       });
     }
     const fireInfo = div(fBody, "adv-brushinfo");
+    fireTimeline(fBody);
     fBody.insertAdjacentHTML("beforeend", `<h4 class="adv-h4">Dónde pesa más</h4>`);
     ranking(fBody, { get: (r) => r.v.incendios, fmt: (v) => pct(v, 1), color: FIRE, only: (v) => v > 0, empty: "Sin superficie quemada registrada." });
   }

@@ -120,7 +120,7 @@ class MeteoGalicia(Source):
             out.append(rec)
         out.sort(key=lambda x: x["id"])
         return {
-            "vintage": f"MeteoGalicia monthly observations {y0}-{y1}",
+            "vintage": f"MeteoGalicia, observaciones mensuales {y0}-{y1}",
             "year": y1,
             "years_window": [y0, y1],
             "units": {"temp_c": "degC", "precip_mm": "mm", "wind_ms": "m/s", "sun_h": "h", "humidity_pct": "%"},

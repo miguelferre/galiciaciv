@@ -33,6 +33,7 @@ avisos de la sección final, sobre todo AENA y Puertos del Estado.
 | `mitma_movilidad` | Viajes origen-destino por zonas municipales, un día (12-03-2025) | Ministerio de Transportes (MITMA) | Licencia de datos abiertos del MITMA (2020) | **Sí para los datos que se redistribuyen**; una obra derivada con valor añadido puede usar otra | No | «Basado en datos abiertos MITMA», con enlace a la página de descarga. Pide mostrar información «siempre actualizada» | Sí | https://movilidad-opendata.mitma.es/LICENCIA%20de%20datos%20abiertos%20del%20MITMA%2020201203.pdf |
 | `ign_ppnn` | Límite del Parque Nacional das Illas Atlánticas | IGN (servicio) con dato del OAPN, MITECO | Metadatos del OAPN: CC BY 4.0; aviso del IGN compatible con CC BY 4.0 | No | No | «Fuente: Organismo Autónomo Parques Nacionales» y «© Instituto Geográfico Nacional de España» | Parcial (que la capa del IGN sea el fichero del OAPN es una inferencia) | https://www.miteco.gob.es/content/dam/miteco/es/parques-nacionales-oapn/red-parques-nacionales/sig/l%C3%ADmites-parques/Metadatos_Limites_PN.pdf ; https://www.ign.es/web/ign/portal/info-aviso-legal |
 | `wikidata_unesco` | Bienes con identificador UNESCO (P757) en Galicia | Wikidata, Fundación Wikimedia | CC0 | No | No | Ninguna obligatoria | Sí | https://www.wikidata.org/wiki/Wikidata:Licensing |
+| `ign_camino` | Etapas de los Caminos de Santiago en Galicia | IGN-CNIG, datos de la FEAACS | CC BY 4.0 («CC-BY 4.0 FEAACS», página del CNIG leída el 2026-11-27) | No | No | «Caminos de Santiago: CC-BY 4.0 FEAACS, vía IGN-CNIG» | Sí | https://centrodedescargas.cnig.es/CentroDescargas/camino-santiago |
 
 ## Avisos antes de publicar
 
@@ -57,8 +58,11 @@ avisos de la sección final, sobre todo AENA y Puertos del Estado.
 8. **Xunta (eólica y BIC):** falta el departamento para la fórmula de atribución. **Pesca de Galicia:** decidir
    si se trata como CC BY-SA 4.0 por el conjunto abierto relacionado.
 9. **IGME:** un servicio de pago sobre sus datos exige contactar antes.
-10. La atribución de las capas nuevas sale en los avisos emergentes y en el Almanaque. Falta un pie de créditos
-    visible en el mapa (OSM, IGN, MITMA) antes de publicar.
+10. **Pie de créditos visible (2026-11-27).** Bajo la barra de lentes del mapa: «© colaboradores de OpenStreetMap»
+    (enlace a la página de copyright), «© Instituto Geográfico Nacional, CC BY 4.0 ign.es», «Fuente: IGE e INE» (enlaces) y,
+    si cabe, «Obra derivada de MDT200 2015 CC-BY 4.0 ign.es», «Basado en datos abiertos MITMA», «© ESA WorldCover» y
+    «© Unión Europea, EFFIS». En pantallas estrechas solo salen las cuatro primeras y el enlace «Todas las fuentes», que
+    abre la página Fuentes del Almanaque con la atribución completa. La atribución de cada capa sigue en sus avisos emergentes.
 
 ## Código
 

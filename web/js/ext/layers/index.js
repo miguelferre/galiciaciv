@@ -5,7 +5,7 @@
 // Data: infrastructure.json, wonders.json and trade.json (loaded eagerly by main.js right after the first frame;
 // app.loadData returns the same promise). A missing file (null) leaves its layers off and their switches harmless.
 // galiciaciv has no military.json (no open data, D-002): there is no switch for it and its layers stay empty.
-// Defaults: roads, rail, ports & airports and wonders on (see each layer's minRpx), trade routes off.
+// Defaults: roads, rail, ports & airports and wonders on (see each layer's minRpx), trade routes and Camino de Santiago off.
 import { createModel } from "./model.js";
 import { makeLayers } from "./layers.js";
 import { tips } from "./tips.js";
@@ -16,6 +16,7 @@ const TOGGLES = [
   { id: "hubs", label: "Puertos y aeropuertos", icon: "d-harbor", def: true, title: "Puertos de interés general y aeropuertos de Galicia (sin cifras de tráfico)", layers: ["hubs"] },
   { id: "wonders", label: "Maravillas", icon: "w-landmark", def: true, title: "Patrimonio Mundial, monumentos BIC y parque nacional", layers: ["wonders", "protected", "plates"] },
   { id: "trade", label: "Comercio y movilidad", icon: "t-trade", def: false, title: "Los mayores flujos diarios de viajes entre comarcas (MITMA)", layers: ["trade"] },
+  { id: "camino", label: "Camino de Santiago", icon: "t-road", def: false, title: "Trazado de los Caminos de Santiago en Galicia (IGN-CNIG, datos de la FEAACS), como ayuda a la marcha", layers: ["camino"] },
 ];
 
 export function install(app) {
@@ -24,25 +25,30 @@ export function install(app) {
   const layers = makeLayers(model, on, { tips, app });
   for (const l of layers) app.registerStaticLayer(l);
 
+  const apply = (name, data) => {
+    model.setData(name, data);
+    app.requestDraw();
+  };
+  const load = (name) => {
+    if (app.data[name] !== undefined) apply(name, app.data[name]);
+    else app.loadData(name).then((d) => apply(name, d), (err) => console.warn(`map layers: ${name} failed to load`, err));
+  };
   for (const t of TOGGLES) {
     app.ui.addMapToggle({
       id: t.id, label: t.label, icon: t.icon, title: t.title, default: t.def,
       get: () => on[t.id],
       set: (v) => {
         on[t.id] = !!v;
+        if (t.id === "camino" && on.camino && !model.camino) load("camino");
         app.requestDraw();
       },
     });
   }
 
-  const apply = (name, data) => {
-    model.setData(name, data);
-    app.requestDraw();
-  };
-  for (const name of ["infrastructure", "wonders", "trade"]) {
-    if (app.data[name] !== undefined) apply(name, app.data[name]);
-    else app.loadData(name).then((d) => apply(name, d), (err) => console.warn(`map layers: ${name} failed to load`, err));
-  }
+  for (const name of ["infrastructure", "wonders", "trade"]) load(name);
+  // camino.json is fetched only when the Camino de Santiago switch is first turned on (or an advisor already loaded it).
+
+  if (app.data.camino) apply("camino", app.data.camino);
 
   // For debugging and the gallery: the model and switches.
   app.mapArt = { model, on, layers };

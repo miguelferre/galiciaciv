@@ -3,6 +3,7 @@ import json
 from ..core.source import Source, SourceInfo
 
 FILE = "relief_grid.json"
+VINTAGE = "IGN MDT 200 m (tierra, España) + ETOPO1 (mar y Portugal) interpolado a los píxeles del MDT (~0,15 x 0,20 km)"
 
 
 class MdtIgn(Source):
@@ -29,4 +30,4 @@ class MdtIgn(Source):
     def process(self):
         d = json.loads((self.raw_dir / FILE).read_text())
         keys = ("x0", "dx", "y0", "dy", "cols", "rows")  # a lon/lat grid; (x0, y0) = centre of the first pixel
-        return {"vintage": d["vintage"], "_files": [FILE], **{k: d[k] for k in keys}}
+        return {"vintage": VINTAGE, "_files": [FILE], **{k: d[k] for k in keys}}

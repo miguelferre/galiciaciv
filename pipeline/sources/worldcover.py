@@ -3,6 +3,7 @@ import json
 from ..core.source import Source, SourceInfo
 
 FILE = "cover_grid.json"
+VINTAGE = "ESA WorldCover 2021 v200 (10 m), vecino más próximo a ~0,2 km"
 
 
 class WorldCover(Source):
@@ -29,4 +30,5 @@ class WorldCover(Source):
     def process(self):
         d = json.loads((self.raw_dir / FILE).read_text())
         d["_files"] = [FILE]
+        d["vintage"] = VINTAGE  # the file from tools/prep_raster.py may carry the older English text
         return d

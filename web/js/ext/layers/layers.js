@@ -1,18 +1,25 @@
 // Static map layers for the map art, as factories over a model (model.js) and a switch state, so the app
 // (index.js) and the art gallery (web/dev/gallery.js) draw exactly the same thing.
 //
-//   makeLayers(model, on, {tips}) → [layer, …]   on = {roads, rail, hubs, military, wonders, trade} (booleans, read live)
+//   makeLayers(model, on, {tips}) → [layer, …]   on = {roads, rail, hubs, military, wonders, trade, camino} (booleans, read live)
 //
 // z slots (render/map.js Z): roads 55 and rail 56 (above rivers and borders, under city tiles), protected land 57 and
 // restricted ground 58 (hatching on hexes), ports & airports 65, forts 66, wonders 67 (above city tiles, under the fog),
 // name plates 68 (forts and wonders laid out together, clear of city banners and City View district plaques), trade
-// routes 85 (above resources, under state names). Everything is drawn into the cached static map; nothing animates.
+// routes 85 (above resources, under state names), Caminos de Santiago 84 (just under the trade routes). Everything is drawn into the cached static map; nothing animates.
 import { drawRoads, drawRail, drawPort, drawAirport, drawTradeRoutes, hitRoute, ROAD_MIN_RPX } from "../../render/art/improvements.js";
 import { drawFort, drawRestricted, drawProtected, drawWonder, drawPlaque } from "../../render/art/sites.js";
 import { visibleSites, siteSize, hitSites } from "./model.js";
 import { POP_SCALE } from "../../render/art/city.js";
 import { REF_KM } from "../../render/art/lod.js";
 import { esc } from "../../format.js";
+
+function segDist(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay;
+  const l2 = dx * dx + dy * dy;
+  const t = l2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l2)) : 0;
+  return Math.hypot(px - ax - t * dx, py - ay - t * dy);
+}
 
 const inVp = (it, vp, padKm) => it.x > vp.x0 - padKm && it.x < vp.x1 + padKm && it.y > vp.y0 - padKm && it.y < vp.y1 + padKm;
 
@@ -145,6 +152,46 @@ export function makeLayers(model, on, { tips = {}, app = null } = {}) {
     tooltip: (it) => tips.route?.(it.data, m) ?? null,
   };
 
+  // Caminos de Santiago: one polyline per stretch (a stretch shared by several Caminos is drawn once, in the colour of the
+  // first), dark halo under a bright core so it reads over green and brown hexes. Widths in css px.
+  const camino = {
+    id: "camino", z: 84, minRpx: 1 * geo,
+    visible: () => !!on.camino && !!m.camino && m.camino.lines.length > 0,
+    sig: ver,
+    draw(ctx, vp, w, o) {
+      const s = vp.s, pad = 20 / s;
+      const wpx = Math.max(1.6, Math.min(4.5, o.Rpx * 0.22));
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.globalAlpha = o.lens ? 0.85 : 1;
+      const shown = m.camino.lines.filter((l) => !(l.bbox[2] < vp.x0 - pad || l.bbox[0] > vp.x1 + pad || l.bbox[3] < vp.y0 - pad || l.bbox[1] > vp.y1 + pad));
+      ctx.strokeStyle = "rgba(20,14,8,.65)";
+      ctx.lineWidth = (wpx + 2.2) / s;
+      for (const l of shown) ctx.stroke(l.path);
+      for (const l of shown) {
+        ctx.strokeStyle = l.color;
+        ctx.lineWidth = wpx / s;
+        ctx.stroke(l.path);
+      }
+      ctx.globalAlpha = 1;
+    },
+    hit: (x, y, Rpx) => {
+      const s = Rpx / grid().R, tol = Math.max(5, Math.min(4.5, Rpx * 0.22) / 2 + 3) / s;
+      let best = null, bestD = Infinity;
+      for (const l of m.camino?.lines || []) {
+        const b = l.bbox;
+        if (x < b[0] - tol || x > b[2] + tol || y < b[1] - tol || y > b[3] + tol) continue;
+        const p = l.pts;
+        for (let k = 2; k < p.length; k += 2) {
+          const d = segDist(x, y, p[k - 2], p[k - 1], p[k], p[k + 1]);
+          if (d < tol && d < bestD) { bestD = d; best = l; }
+        }
+      }
+      return best ? { kind: "camino", data: best, x, y } : null;
+    },
+    tooltip: (it) => tips.camino?.(it.data, m, it.x, it.y) ?? null,
+  };
+
   // Name plates under the forts (major ones, close in) and wonders, laid out together in one pass (wonders first, by
   // rank), so no two overlap; each keeps clear of where city banners stand and, in the City View, of the hexes that
   // hold a district plaque.
@@ -225,5 +272,5 @@ export function makeLayers(model, on, { tips = {}, app = null } = {}) {
     o.world();
   }
 
-  return [roads, rail, protectedLand, restricted, hubs, forts, wonders, plates, trade];
+  return [roads, rail, protectedLand, restricted, hubs, forts, wonders, plates, camino, trade];
 }

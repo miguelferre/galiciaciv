@@ -65,7 +65,7 @@ export function createModel(w) {
   const geo = () => w.grid.R / REF_KM;
   const m = {
     w, version: 0, data: {},
-    net: null, ports: [], airports: [], installations: [], ranges: [], parks: [], wonders: [], routes: [],
+    net: null, ports: [], airports: [], installations: [], ranges: [], parks: [], wonders: [], routes: [], camino: null,
     rangeById: new Map(),
     _vis: new Map(),
   };
@@ -97,12 +97,34 @@ export function createModel(w) {
         .map((x) => ({ wonder: x, ...prepareCellSet(w, x.cells) }));
     } else if (name === "trade") {
       m.routes = data ? prepareRoutes(w, data) : [];
+    } else if (name === "camino") {
+      m.camino = data ? prepareCamino(data) : null;
     }
     place(m);
     m._vis.clear();
     m.version++;
   };
   return m;
+}
+
+/** camino.json → {routes: Map(id → route), lines: [{routes, pts, color, path, bbox}], byConcello}. Each line takes the colour of its first route. */
+function prepareCamino(data) {
+  const routes = new Map((data.routes || []).map((r) => [r.id, r]));
+  const lines = [];
+  for (const l of data.lines || []) {
+    const p = l.pts || [];
+    if (p.length < 4) continue;
+    const path = new Path2D();
+    path.moveTo(p[0], p[1]);
+    let x0 = p[0], x1 = p[0], y0 = p[1], y1 = p[1];
+    for (let k = 2; k < p.length; k += 2) {
+      path.lineTo(p[k], p[k + 1]);
+      if (p[k] < x0) x0 = p[k]; else if (p[k] > x1) x1 = p[k];
+      if (p[k + 1] < y0) y0 = p[k + 1]; else if (p[k + 1] > y1) y1 = p[k + 1];
+    }
+    lines.push({ routes: l.routes, pts: p, path, bbox: [x0, y0, x1, y1], color: routes.get(l.routes[0])?.color || "#ffffff" });
+  }
+  return { routes, lines, byConcello: data.by_concello || {} };
 }
 
 const okCell = (w) => (x) => x && Number.isInteger(x.cell) && x.cell >= 0 && x.cell < w.grid.size;

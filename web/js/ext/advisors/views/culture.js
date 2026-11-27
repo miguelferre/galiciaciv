@@ -7,7 +7,8 @@ import { barList } from "../core/charts.js";
 import { section, tiles, segmented, mapPicker, sourcesHtml, topBy } from "../core/view.js";
 import { rowsHighlight } from "../core/data.js";
 import { frameBox, focusPoint } from "../core/frame.js";
-import { stateLens } from "../core/lenses.js";
+import { cultureLens, CULTURE_BRANCH as BRANCH } from "../core/lenses.js";
+import { caminoLens } from "../core/camino.js";
 
 // One entry per rule of wonders.json: the short label of the filter and the marker colour.
 const RULES = {
@@ -16,12 +17,10 @@ const RULES = {
   parque_nacional: { short: "Parque", color: "#6aa84f" },
 };
 const ruleColor = (id) => RULES[id]?.color || "#ccc";
-const BRANCH = "AAPP, Educación, Sanidade e outros servizos";
-const SHARE_RAMP = ["#221030", "#43215c", "#6a3790", "#9556c0", "#bd8be0", "#efe0fa"];
 
 export async function mount(ctx) {
   const { app, data, el, link } = ctx;
-  const [won, dist] = await Promise.all(["wonders", "districts"].map((f) => app.loadData(f).catch(() => null)));
+  const [won, dist, cam] = await Promise.all(["wonders", "districts", "camino"].map((f) => app.loadData(f).catch(() => null)));
   const { states: comarcas, metros, counties } = data.levels;
   const yieldDef = app.data.nation?.yields?.find((y) => y.key === "culture");
   const share = (r) => ratio(r.v.y_culture, r.v.affiliates);
@@ -54,20 +53,14 @@ export async function mount(ctx) {
 
   // --- map colour -----------------------------------------------------------------------------------------------
   let picker = null;
-  if (fin(galShare)) {
-    const shareLens = () => stateLens(data, "culture-branch", (_, r) => share(r), {
-      group: "work", name: "Peso de la rama Cultura", unit: "de las personas afiliadas", format: "pct", source: "ige_ramas", ramp: SHARE_RAMP,
-      description: `Estimación de las personas afiliadas en la rama «${BRANCH}» entre todas las afiliadas que viven en la comarca (IGE). No son trabajadores de la cultura.`,
-    });
+  const hasCamino = !!(cam?.routes?.length && counties?.field("camino_km"));
+  const mapOptions = [{ value: "terrain", label: "Terreno", lens: () => null }];
+  if (fin(galShare)) mapOptions.push({ value: "share", label: "Peso de la rama", lens: () => cultureLens(data) });
+  if (hasCamino) mapOptions.push({ value: "camino", label: "Km de Camino", lens: () => caminoLens(data) });
+  if (mapOptions.length > 1) {
     const mapRow = mk("div", "adv-sec adv-mapsec");
     el.appendChild(mapRow);
-    picker = mapPicker(ctx, mapRow, {
-      value: "terrain",
-      options: [
-        { value: "terrain", label: "Terreno", lens: () => null },
-        { value: "share", label: "Peso de la rama", lens: shareLens },
-      ],
-    });
+    picker = mapPicker(ctx, mapRow, { value: "terrain", options: mapOptions });
   }
 
   // --- wonders --------------------------------------------------------------------------------------------------
@@ -169,7 +162,7 @@ export async function mount(ctx) {
       });
     }
     drawYield();
-    if (picker) {
+    if (picker && fin(galShare)) {
       const b = mk("button", "adv-mini");
       b.type = "button";
       b.textContent = "Colorear el mapa por comarcas según el peso";
@@ -200,11 +193,63 @@ export async function mount(ctx) {
     pBody.insertAdjacentHTML("beforeend", `<p class="adv-note adv-rule">${esc(dist.rule?.text || "")}</p>`);
   }
 
-  el.insertAdjacentHTML("beforeend", sourcesHtml(data, [...(won?.sources || []), "ige_ramas", "ige_afiliacion", "ige_unidades"], [
+  // --- Camino de Santiago -----------------------------------------------------------------------------------------
+  let caminoBars = null, caminoTop = null;
+  if (hasCamino) {
+    const cBody = section(el, { title: "Camino de Santiago", kicker: "Trazado del IGN, kilómetros por concello" });
+    const crossed = (id) => counties.rows.filter((r) => cam.by_concello[r.key]?.routes.includes(id));
+    cBody.insertAdjacentHTML("beforeend", `<p class="adv-note">${int(cam.routes.length)} Caminos pasan por Galicia. El total no cuenta dos veces los tramos que comparten varios Caminos.</p>`);
+    cBody.insertAdjacentHTML("beforeend", tiles([
+      { label: "Caminos", value: int(cam.routes.length), sub: "con tramo en Galicia" },
+      { label: "Km en Galicia", value: int(Math.round(cam.total_km)), sub: `${int(Object.keys(cam.by_concello).length)} concellos` },
+    ]));
+    const row = mk("div", "adv-row");
+    cBody.appendChild(row);
+    const lensB = mk("button", "adv-mini");
+    lensB.type = "button";
+    const syncLens = () => { lensB.textContent = picker?.value === "camino" ? "Quitar la lente Km de Camino" : "Ver la lente Km de Camino"; };
+    syncLens();
+    lensB.addEventListener("click", () => { picker?.set(picker.value === "camino" ? "terrain" : "camino"); syncLens(); });
+    if (picker) { row.appendChild(lensB); ctx.on("lens", syncLens); }
+    const layerB = mk("button", "adv-mini");
+    layerB.type = "button";
+    layerB.textContent = "Dibujar los Caminos en el mapa";
+    layerB.addEventListener("click", () => app.ui?.setMapToggle?.("camino", true));
+    if (app.ui?.setMapToggle) row.appendChild(layerB);
+    cBody.insertAdjacentHTML("beforeend", `<h4 class="adv-h4">Km de cada Camino dentro de Galicia</h4>`);
+    const rHost = mk("div");
+    cBody.appendChild(rHost);
+    caminoBars = barList(rHost, {
+      rank: true, ariaLabel: "Km de cada Camino de Santiago dentro de Galicia",
+      rows: [...cam.routes].sort((a, b) => b.km_galicia - a.km_galicia).map((r) => ({
+        key: r.id, label: r.name, full: r.full_name || r.name, value: r.km_galicia, text: `${int(Math.round(r.km_galicia))} km`, color: r.color,
+      })),
+      onHover: (x) => link.hover(x ? rowsHighlight(counties, crossed(x.key), { dim: true }) : null),
+    });
+    cBody.insertAdjacentHTML("beforeend", `<p class="adv-note">Cada Camino cuenta su recorrido entero, variantes incluidas; por eso la suma de los Caminos pasa del total.</p><h4 class="adv-h4">Concellos con más km de Camino</h4>`);
+    const top = topBy(counties.rows, (r) => r.v.camino_km, { n: 12 });
+    caminoTop = barList(cBody, {
+      rank: true, ariaLabel: "Concellos con más kilómetros de Camino",
+      rows: top.map(({ r, v }) => ({
+        key: r.key, label: r.name, row: r, value: v, color: "#f2c14e",
+        sub: (() => {
+          const ids = cam.by_concello[r.key]?.routes || [];
+          return ids.length > 2 ? `${ids.length} Caminos` : ids.map((id) => cam.routes.find((x) => x.id === id)?.name || id).join(", ");
+        })(),
+        text: `${dec(v, 1)} km`,
+      })),
+      onHover: (x) => link.hover(x ? rowsHighlight(counties, [x.row], { dim: true }) : null),
+      onClick: (x) => counties.focus(x.row),
+    });
+    cBody.insertAdjacentHTML("beforeend", `<p class="adv-note adv-rule">${esc(cam.rule || "")}</p><p class="adv-note">${esc(cam.attribution || "")}. ${esc(cam.vintage || "")}.</p>`);
+  }
+
+  el.insertAdjacentHTML("beforeend", sourcesHtml(data, [...(won?.sources || []), "ige_ramas", "ige_afiliacion", "ige_unidades", ...(hasCamino ? ["ign_camino"] : [])], [
     "La lista del Patrimonio Mundial sale de Wikidata, no es la lista oficial de la UNESCO: puede faltar o sobrar algún elemento.",
     "La superficie de un BIC se cruza con su punto por una regla heurística y mide extensión, no valor ni grado de protección.",
     "El rendimiento Cultura es una estimación de afiliados de una rama amplia, no un recuento de empleo cultural.",
     "El directorio de unidades locales no incluye el sector primario ni la administración pública.",
+    ...(hasCamino ? ["El trazado de los Caminos es una ayuda a la marcha, no el trazado definitivo (aviso del CNIG). Los km por concello se miden sobre ese trazado."] : []),
   ]));
 
   return {
@@ -213,6 +258,7 @@ export async function mount(ctx) {
       yieldBars?.setHot(yr ? yr.key : null);
       const c = h.cell >= 0 && counties ? counties.rowAtCell(h.cell) : null;
       plazaBars?.setHot(c ? c.key : null);
+      caminoTop?.setHot(c ? c.key : null);
       if (h.item?.kind === "wonder") for (const w of wonderBars) w.setHot(h.item.data?.id ?? null);
     },
     onMapClick(ev) {

@@ -126,6 +126,10 @@ export function mapPicker(ctx, parent, { options, value, label = "Mapa" }) {
     busy = true;
     try { ctx.setLens(resolve(o)); } finally { busy = false; }
   };
+  // The lens on the map (or waiting in a #lens= link) wins over the default, when it is one of the options.
+  const want = ctx.app.state.lens?.id || ctx.app.pendingLens;
+  const start = want ? options.find((o) => resolve(o)?.id === want) : null;
+  if (start) value = start.value;
   const seg = segmented(row, { label: `Color: ${label}`, options, value, onChange: (v) => pick(v) });
   const sync = (lens) => {
     const o = options.find((x) => resolve(x) === (lens || null));

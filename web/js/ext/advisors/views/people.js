@@ -5,21 +5,12 @@ import { barList, stackedBars, shareBar, histogram, rampLegend } from "../core/c
 import { createScatter } from "../core/scatter.js";
 import { section, tiles, segmented, mapPicker, frameBtn, sourcesHtml, topBy } from "../core/view.js";
 import { rowsHighlight, extendData } from "../core/data.js";
-import { countyLens } from "../core/lenses.js";
+import { growthLens } from "../core/lenses.js";
 
 const AGE_COLOR = { child: "#f6dc8a", young: "#7fbf8e", midlife: "#4f8fa8", elder: "#a8639e" };
 const BIRTH_COLOR = { same_concello: "#c9a45c", galicia: "#8fb86a", spain: "#5a9ad0", abroad: "#d8675c" };
 const years = (v) => (fin(v) ? `${dec(v, 1)} años` : "–");
 
-/** Population change per concello, red (loses) to teal (gains), centred on zero. */
-function growthLens(data) {
-  const vals = data.levels.counties.rows.map((r) => r.v.growth).filter(fin).map(Math.abs).sort((a, b) => a - b);
-  const m = vals.length ? Math.max(vals[Math.floor(vals.length * 0.98)] || 0.01, 0.01) : 0.1;
-  return countyLens(data, "growth", {
-    name: "Variación de la población", ramp: RAMPS.div, format: "pct", domain: [-m, m], emoji: "📉",
-    unit: "variación 2021-2025", icon: "pop",
-  });
-}
 const perKm2 = (v) => (fin(v) ? `${v >= 100 ? int(v) : dec(v, 1)} hab./km²` : "–");
 
 export async function mount(ctx) {

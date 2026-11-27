@@ -12,6 +12,7 @@
 //   onHover(row|null), onClick(row), caption (aria label), empty (text when no rows)
 import { esc, fin, rafThrottle, onWidth } from "./util.js";
 import { int } from "./fmt.js";
+import { t } from "../../../i18n.js";
 
 const fold = (s) => String(s).normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
@@ -34,7 +35,7 @@ export function createTable(host, opts) {
     <div class="adv-thead" role="row"></div>
     <div class="adv-tbody" role="rowgroup" tabindex="-1"><div class="adv-tspace"></div></div>`;
   root.setAttribute("role", "table");
-  root.setAttribute("aria-label", opts.caption || "Tabla de datos");
+  root.setAttribute("aria-label", opts.caption || t("Tabla de datos"));
   host.appendChild(root);
   width = Math.round(root.clientWidth) || 0;
   cols = visibleCols();
@@ -51,7 +52,7 @@ export function createTable(host, opts) {
     head.innerHTML = `${opts.rank ? `<span class="th r" role="columnheader">#</span>` : ""}${cols.map((c) => {
       const s = sort?.key === c.key ? sort.dir : null;
       return `<span class="th ${c.align === "l" ? "l" : "r"}" role="columnheader" aria-sort="${s === "asc" ? "ascending" : s === "desc" ? "descending" : "none"}">
-        <button type="button" data-sort="${esc(c.key)}" title="${esc(c.title || `Ordenar por ${c.label}`)}">${c.short ? c.short : esc(c.label)}${s ? `<span class="arr" aria-hidden="true">${s === "asc" ? "▲" : "▼"}</span>` : ""}</button></span>`;
+        <button type="button" data-sort="${esc(c.key)}" title="${esc(c.title || t("Ordenar por {label}", { label: c.label }))}">${c.short ? c.short : esc(c.label)}${s ? `<span class="arr" aria-hidden="true">${s === "asc" ? "▲" : "▼"}</span>` : ""}</button></span>`;
     }).join("")}`;
   }
 
@@ -71,7 +72,7 @@ export function createTable(host, opts) {
         return dir * (va - vb);
       });
     }
-    if (cnt) cnt.textContent = `${int(view.length)} de ${int(all.length)}`;
+    if (cnt) cnt.textContent = t("{n} de {total}", { n: int(view.length), total: int(all.length) });
     const maxH = opts.maxHeight || 340;
     const h = Math.min(maxH, Math.max(rowH * 2, view.length * rowH + 2));
     body.style.height = `${h}px`;
@@ -102,7 +103,7 @@ export function createTable(host, opts) {
         return `<span class="td ${c.align === "l" ? "l" : "r"}${c.bar ? " hasbar" : ""}" role="cell"${tip ? ` title="${esc(tip)}"` : ""}>${inner}</span>`;
       }).join("")}</div>`;
     }
-    space.innerHTML = html || `<div class="adv-empty pad">${esc(opts.empty || "Sin filas.")}</div>`;
+    space.innerHTML = html || `<div class="adv-empty pad">${esc(opts.empty || t("Sin filas."))}</div>`;
   }
 
   body.addEventListener("scroll", rafThrottle(() => renderRows()), { passive: true });
@@ -142,7 +143,7 @@ export function createTable(host, opts) {
   });
   // Keyboard: the body is focusable; arrows move the hot row, Enter opens it.
   body.tabIndex = 0;
-  body.setAttribute("aria-label", `${opts.caption || "Tabla"}: usa las flechas para moverte por las filas e Intro para abrir una`);
+  body.setAttribute("aria-label", t("{caption}: usa las flechas para moverte por las filas e Intro para abrir una", { caption: opts.caption || t("Tabla") }));
   body.addEventListener("keydown", (e) => {
     if (!view.length) return;
     let i = view.findIndex((r) => String(keyOf(r)) === String(hot));

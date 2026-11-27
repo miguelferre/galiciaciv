@@ -2,6 +2,7 @@ import { esc, int, popShort, compact } from "../format.js";
 import { formatLensValue } from "./lenses.js";
 import { glyph } from "./icon.js";
 import { FOREIGN } from "../world.js";
+import { t } from "../i18n.js";
 
 const el = () => document.getElementById("tooltip");
 
@@ -11,16 +12,16 @@ export function showCellTooltip(mx, my, w, i, lens, showResources = true) {
   const raw = w.raw;
   const lines = [];
   const city = w.cityByCell.get(i);
-  if (city) lines.push(`<b>${esc(city.name)}</b> <span class="muted">· ${popShort(city.population)} hab.</span>`);
+  if (city) lines.push(`<b>${esc(city.name)}</b> <span class="muted">· ${t("{pop} hab.", { pop: popShort(city.population) })}</span>`);
 
   const wt = w.water[i];
   if (wt) {
-    const depth = raw.elev[i] < 0 ? ` <span class="muted">· ${int(-raw.elev[i])} m de profundidad</span>` : "";
-    lines.push(`<b>${esc(nameOf(w.tables.water, wt) || "Agua")}</b>${depth}`);
+    const depth = raw.elev[i] < 0 ? ` <span class="muted">· ${t("{n} m de profundidad", { n: int(-raw.elev[i]) })}</span>` : "";
+    lines.push(`<b>${esc(nameOf(w.tables.water, wt) || t("Agua"))}</b>${depth}`);
   } else {
     const cover = w.cover[i] > 0 ? nameOf(w.tables.cover, w.cover[i]) : null;
     const relief = w.relief[i] > 0 ? nameOf(w.tables.relief, w.relief[i]) : null;
-    const terrain = [cover, relief].filter(Boolean).join(" · ") || (relief ?? "Tierra");
+    const terrain = [cover, relief].filter(Boolean).join(" · ") || (relief ?? t("Tierra"));
     lines.push(`<b>${esc(terrain)}</b> <span class="muted">· ${int(raw.elev[i])} m</span>`);
   }
   const o = raw.owner[i];
@@ -29,7 +30,7 @@ export function showCellTooltip(mx, my, w, i, lens, showResources = true) {
     lines.push(`${esc(county)}${esc(raw.states[o].name)}`);
     if (lens) lines.push(`${glyph(lens, 13)} ${esc(lens.name)}: <b>${formatLensValue(lens, lens.values[i])}</b>`);
   } else if (o === FOREIGN) {
-    lines.push(`<span class="muted">Fuera de Galicia (sin cartografiar)</span>`);
+    lines.push(`<span class="muted">${t("Fuera de Galicia (sin cartografiar)")}</span>`);
   }
   const res = showResources && w.resources?.byCell.get(i);
   if (res) {
@@ -40,10 +41,10 @@ export function showCellTooltip(mx, my, w, i, lens, showResources = true) {
       const kind = it.name && it.name !== t.name ? ` <span class="muted">· ${esc(t.name)}${val}</span>` : `<span class="muted">${val}</span>`;
       lines.push(`<span style="color:${esc(t.color || "#efe4c6")}">${glyph(t, 13)}</span> ${esc(it.name || t.name)}${kind}`);
     }
-    if (res.length > 4) lines.push(`<span class="muted">+${res.length - 4} más</span>`);
+    if (res.length > 4) lines.push(`<span class="muted">${t("+{n} más", { n: res.length - 4 })}</span>`);
   }
-  if (city) lines.push(`<span class="muted">Pulsa para abrir la ciudad</span>`);
-  else if (o >= 0) lines.push(`<span class="muted">Pulsa para abrir ${esc(raw.states[o].name)}</span>`);
+  if (city) lines.push(`<span class="muted">${t("Pulsa para abrir la ciudad")}</span>`);
+  else if (o >= 0) lines.push(`<span class="muted">${t("Pulsa para abrir {name}", { name: esc(raw.states[o].name) })}</span>`);
   show(mx, my, lines.join("<br>"));
 }
 
@@ -58,7 +59,7 @@ export function showHtmlTooltip(mx, my, content) {
 }
 
 export function showCityTooltip(mx, my, city) {
-  show(mx, my, `<b>${esc(city.full)}</b><br><span class="muted">Pulsa para abrir la ciudad</span>`);
+  show(mx, my, `<b>${esc(city.full)}</b><br><span class="muted">${t("Pulsa para abrir la ciudad")}</span>`);
 }
 
 function show(mx, my, html) {

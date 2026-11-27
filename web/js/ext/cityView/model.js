@@ -2,21 +2,22 @@
 // nation.json, lenses.json, world.json and resources.json. Pure functions over app.data / app.w (no DOM).
 // A city here is one concello, so its footprint is every hex of that concello.
 import { stateIndex } from "../../world.js";
+import { t } from "../../i18n.js";
 
 // The four sectors of `jobs` (IGE affiliations) → label, medallion colour and icon id (icons.js).
 export const SECTOR = {
-  agricultura: { label: "Agricultura y pesca", color: "#4f7a2a", icon: "i-agriculture" },
-  industria: { label: "Industria", color: "#9a5a22", icon: "i-manufacturing" },
-  construccion: { label: "Construcción", color: "#8a5426", icon: "i-construction" },
-  servicios: { label: "Servicios", color: "#2b4f8a", icon: "i-other" },
+  agricultura: { label: t("Agricultura y pesca"), color: "#4f7a2a", icon: "i-agriculture" },
+  industria: { label: t("Industria"), color: "#9a5a22", icon: "i-manufacturing" },
+  construccion: { label: t("Construcción"), color: "#8a5426", icon: "i-construction" },
+  servicios: { label: t("Servicios"), color: "#2b4f8a", icon: "i-other" },
 };
 
 // Land-use groups shown as a hex's "tile yield" (world.json pct keys → group). Cover ids give the map colour.
 export const LAND = [
-  { key: "built", label: "Urbanizado", icon: "l-developed", cover: 9, keys: ["developed"] },
-  { key: "farm", label: "Cultivo y pasto", icon: "l-farmland", cover: 7, keys: ["crop", "pasture"] },
-  { key: "forest", label: "Bosque", icon: "l-forest", cover: 3, keys: ["forest"] },
-  { key: "open", label: "Terreno abierto", icon: null, cover: 4, keys: ["grass", "shrub", "wetland"] },
+  { key: "built", label: t("Urbanizado"), icon: "l-developed", cover: 9, keys: ["developed"] },
+  { key: "farm", label: t("Cultivo y pasto"), icon: "l-farmland", cover: 7, keys: ["crop", "pasture"] },
+  { key: "forest", label: t("Bosque"), icon: "l-forest", cover: 3, keys: ["forest"] },
+  { key: "open", label: t("Terreno abierto"), icon: null, cover: 4, keys: ["grass", "shrub", "wetland"] },
 ];
 
 const sum = (o) => Object.values(o || {}).reduce((a, v) => a + (Number.isFinite(v) ? v : 0), 0);
@@ -73,7 +74,7 @@ export function buildModel(app, city) {
 
   // Resource sites of the city (resources.json items tagged with this concello code), biggest first per type.
   const items = resources?.items || [];
-  const typeById = new Map((resources?.types || []).map((t) => [t.id, t]));
+  const typeById = new Map((resources?.types || []).map((ty) => [ty.id, ty]));
   const sites = [];
   items.forEach((it, index) => {
     if (it.cbsa === city.id) sites.push({ item: it, index, type: typeById.get(it.type) || null });
@@ -133,7 +134,7 @@ export function buildModel(app, city) {
     return { ref, index: i, name: i >= 0 ? w.raw.states[i].name : String(ref) };
   });
   const comarcaOf = (c) => (c.states || []).map((ref) => w.raw.states[stateIndex(w, ref)]?.name).filter(Boolean).join(", ");
-  const residentsSum = tiles.reduce((a, t) => a + (t.residents || 0), 0);
+  const residentsSum = tiles.reduce((a, tl) => a + (tl.residents || 0), 0);
 
   return {
     city, N, nation, stateIdx, hexArea: area, stateRGB, states, comarcaOf, footprint, mask, tiles, residentsSum,
@@ -161,7 +162,7 @@ export function placeDistricts(m, list, grid) {
   m.placed = [];
   m.inCity = [];
   for (const d of ds) {
-    const cell = m.free.find((c) => taken.every((t) => far(c, t)));
+    const cell = m.free.find((c) => taken.every((k) => far(c, k)));
     if (cell == null) m.inCity.push(d);
     else {
       taken.push(cell);
@@ -177,12 +178,12 @@ export function rankCount(cities, key) {
   return n;
 }
 
-const ONE_UNIT = { aerogeneradores: "aerogenerador", explotaciones: "explotación" };
-
 /** A resource value with its unit, short ("37 aerogeneradores", "15 explotaciones", "83,4 M €"). */
 export function resourceValue(item, type, compact) {
   const v = item.value;
   if (!Number.isFinite(v)) return "";
   const u = type?.unit || "";
-  return `${compact(v)} ${v === 1 && ONE_UNIT[u] ? ONE_UNIT[u] : u}`.trim();
+  // The unit text comes translated from resources.json, so the singular is chosen by the type, not by the text.
+  const one = v === 1 && type ? (type.id === "eolico" ? t("aerogenerador") : type.category === "mineral" ? t("explotación") : null) : null;
+  return `${compact(v)} ${one || u}`.trim();
 }

@@ -5,6 +5,7 @@
 //   elev   m (land altitude, sea depth <= 0, lake surface)      water  0 land, 1/2 sea, 3 lake
 //   owner  >= 0 Galician (comarca), -1 water, -2 foreign land   game   game cell that gives lens values and concello
 import { makeGrid } from "../../hex.js";
+import { t } from "../../i18n.js";
 
 export const DETAIL_URL = new URL("../../../data/relief3d_detalle.bin", import.meta.url);
 const NONE = 65535;
@@ -27,12 +28,12 @@ export function normalTerrain(w) {
 export function parseDetail(buffer) {
   const view = new DataView(buffer);
   const magic = String.fromCharCode(...new Uint8Array(buffer, 0, 4));
-  if (magic !== "R3D1") throw new Error("el fichero de detalle no tiene el formato esperado");
+  if (magic !== "R3D1") throw new Error(t("el fichero de detalle no tiene el formato esperado"));
   const length = view.getUint32(4, true);
   const header = JSON.parse(new TextDecoder().decode(new Uint8Array(buffer, 8, length)));
   const n = header.count;
   let at = 8 + length;
-  if (buffer.byteLength !== at + n * 5) throw new Error("el fichero de detalle está incompleto");
+  if (buffer.byteLength !== at + n * 5) throw new Error(t("el fichero de detalle está incompleto"));
   const elev = new Int16Array(buffer, at, n);
   at += n * 2;
   const parent = new Uint16Array(buffer, at, n);
@@ -48,7 +49,7 @@ export function detailTerrain(w, buffer) {
   const made = header.game;
   // The fine mesh lives in the map km of the world it was made for: another projection or map size moves everything.
   if (!sameNumbers(made.projection, w.raw.projection) || made.width !== w.raw.width || made.height !== w.raw.height) {
-    throw new Error("el detalle se generó para otro mapa; hay que repetir tools/prep_relief3d.py");
+    throw new Error(t("el detalle se generó para otro mapa; hay que repetir tools/prep_relief3d.py"));
   }
   const grid = makeGrid(header.grid);
   const n = grid.size;
@@ -113,6 +114,6 @@ export function detailTerrain(w, buffer) {
 
 export async function loadDetail(w, url = DETAIL_URL) {
   const r = await fetch(url);
-  if (!r.ok) throw new Error(`falta data/relief3d_detalle.bin (HTTP ${r.status})`);
+  if (!r.ok) throw new Error(t("falta data/relief3d_detalle.bin (HTTP {status})", { status: r.status }));
   return detailTerrain(w, await r.arrayBuffer());
 }

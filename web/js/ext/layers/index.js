@@ -9,15 +9,16 @@
 import { createModel } from "./model.js";
 import { makeLayers } from "./layers.js";
 import { tips } from "./tips.js";
+import { t } from "../../i18n.js";
 
 const TOGGLES = [
-  { id: "roads", label: "Carreteras", icon: "t-road", def: true, title: "Autopistas, autovías y vías rápidas (OpenStreetMap, como dibujo del mapa)", layers: ["roads"] },
-  { id: "rail", label: "Ferrocarril", icon: "t-rail", def: true, title: "Líneas de tren, incluida la alta velocidad (OpenStreetMap, como dibujo del mapa)", layers: ["rail"] },
-  { id: "hubs", label: "Puertos y aeropuertos", icon: "d-harbor", def: true, title: "Puertos de interés general y aeropuertos de Galicia (sin cifras de tráfico)", layers: ["hubs"] },
-  { id: "wonders", label: "Maravillas", icon: "w-landmark", def: true, title: "Patrimonio Mundial, monumentos BIC y parque nacional", layers: ["wonders", "protected", "plates"] },
-  { id: "trade", label: "Comercio y movilidad", icon: "t-trade", def: false, title: "Los mayores flujos diarios de viajes entre comarcas (MITMA)", layers: ["trade"] },
-  { id: "camino", label: "Camino de Santiago", icon: "t-road", def: false, title: "Trazado de los Caminos de Santiago en Galicia (IGN-CNIG, datos de la FEAACS), como ayuda a la marcha", layers: ["camino"] },
-  { id: "fp", label: "Centros de FP", icon: "FP", def: false, title: "Centros con oferta de Formación Profesional 2026-27 (Xunta de Galicia) y proyectos industriales estratégicos (PIE)", layers: ["fp"] },
+  { id: "roads", label: t("Carreteras"), icon: "t-road", def: true, title: t("Autopistas, autovías y vías rápidas (OpenStreetMap, como dibujo del mapa)"), layers: ["roads"] },
+  { id: "rail", label: t("Ferrocarril"), icon: "t-rail", def: true, title: t("Líneas de tren, incluida la alta velocidad (OpenStreetMap, como dibujo del mapa)"), layers: ["rail"] },
+  { id: "hubs", label: t("Puertos y aeropuertos"), icon: "d-harbor", def: true, title: t("Puertos de interés general y aeropuertos de Galicia (sin cifras de tráfico)"), layers: ["hubs"] },
+  { id: "wonders", label: t("Maravillas"), icon: "w-landmark", def: true, title: t("Patrimonio Mundial, monumentos BIC y parque nacional"), layers: ["wonders", "protected", "plates"] },
+  { id: "trade", label: t("Comercio y movilidad"), icon: "t-trade", def: false, title: t("Los mayores flujos diarios de viajes entre comarcas (MITMA)"), layers: ["trade"] },
+  { id: "camino", label: t("Camino de Santiago"), icon: "t-road", def: false, title: t("Trazado de los Caminos de Santiago en Galicia (IGN-CNIG, datos de la FEAACS), como ayuda a la marcha"), layers: ["camino"] },
+  { id: "fp", label: t("Centros de FP"), icon: "FP", def: false, title: t("Centros con oferta de Formación Profesional 2026-27 (Xunta de Galicia) y proyectos industriales estratégicos (PIE)"), layers: ["fp"] },
 ];
 
 export function install(app) {

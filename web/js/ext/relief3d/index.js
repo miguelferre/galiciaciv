@@ -4,8 +4,10 @@
 //
 // Needs from `app`: w (prepared world), data.lenses; optional: data.states, data.sources, ui.addTopButton, ui.toast,
 // registerMode / setMode / mode (Esc then leaves the view through main.js). Exposes app.relief3d for tests.
+import { t } from "../../i18n.js";
+
 const MODE = "relief3d";
-const TITLE = "Ver el relieve en 3D, con la altura exagerada";
+const TITLE = t("Ver el relieve en 3D, con la altura exagerada");
 // A hex prism: top face and the two visible walls.
 const GLYPH = '<svg class="r3d-glyph" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" fill="none" ' +
   'stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M8 1.5 14 4.5 8 7.5 2 4.5Z"/>' +
@@ -54,7 +56,7 @@ export function install(app) {
       },
       (err) => {
         console.error("relief3d: no se pudo abrir", err);
-        app.ui?.toast?.("No se pudo abrir el relieve 3D");
+        app.ui?.toast?.(t("No se pudo abrir el relieve 3D"));
         close();
         return false;
       },
@@ -79,8 +81,8 @@ export function install(app) {
 
   if (hasModes) app.registerMode(MODE, { enter, exit });
 
-  const inner = `${GLYPH}<span class="lbl">Relieve 3D</span><span class="r3d-short" aria-hidden="true">3D</span>`;
-  let button = app.ui?.addTopButton?.({ id: "btn-relief3d", label: "Relieve 3D", title: TITLE, onClick: open });
+  const inner = `${GLYPH}<span class="lbl">${t("Relieve 3D")}</span><span class="r3d-short" aria-hidden="true">3D</span>`;
+  let button = app.ui?.addTopButton?.({ id: "btn-relief3d", label: t("Relieve 3D"), title: TITLE, onClick: open });
   if (!button) {
     // No top bar in this host: a floating button in the corner.
     button = document.createElement("button");
@@ -92,7 +94,7 @@ export function install(app) {
     document.body.appendChild(button);
   }
   button.innerHTML = inner;
-  button.setAttribute("aria-label", "Relieve 3D");
+  button.setAttribute("aria-label", t("Relieve 3D"));
 
   app.relief3d = {
     open,

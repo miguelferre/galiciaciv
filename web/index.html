@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Galicia en hexágonos</title>
+  <title data-i18n>Galicia en hexágonos</title>
   <meta name="description" content="Galicia dibujada como un mapa de estrategia 4X: terreno hexagonal, ciudades con rendimientos y lentes, a partir de datos públicos.">
   <meta name="theme-color" content="#131e2a">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='2' y='12' width='60' height='40' rx='3' fill='%23c9a45c'/%3E%3Csvg x='4' y='14' width='56' height='36' viewBox='0 0 30 20' preserveAspectRatio='none'%3E%3Crect width='30' height='20' fill='%23fff'/%3E%3Cline x1='-2' y1='-1.33' x2='32' y2='21.33' stroke='%230a8fd0' stroke-width='5.2'/%3E%3C/svg%3E%3C/svg%3E">
@@ -20,55 +20,55 @@
 <body>
   <header id="topbar">
     <div class="brand" title="Galicia"><span class="brand-emblem" aria-hidden="true"><svg viewBox="0 0 30 20" width="26" height="17" focusable="false"><rect width="30" height="20" fill="#fff"/><line x1="-2" y1="-1.33" x2="32" y2="21.33" stroke="#0a8fd0" stroke-width="5.2"/></svg></span><span class="brand-text">Galicia</span></div>
-    <div id="yields" class="yields" aria-label="Rendimientos de Galicia"></div>
+    <div id="yields" class="yields" aria-label="Rendimientos de Galicia" data-i18n-attr="aria-label"></div>
     <div class="spacer"></div>
     <div class="search" role="search">
       <span class="search-ic" aria-hidden="true"></span>
-      <input id="search-input" type="search" placeholder="Buscar ciudades y comarcas" autocomplete="off" spellcheck="false"
+      <input id="search-input" type="search" data-i18n-attr="placeholder,aria-label" placeholder="Buscar ciudades y comarcas" autocomplete="off" spellcheck="false"
         role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-results" aria-label="Buscar ciudades y comarcas (/ o Ctrl K)">
       <kbd class="search-kbd" aria-hidden="true">/</kbd>
     </div>
     <div id="turn" class="turn"></div>
     <div class="tb-buttons">
-      <button id="btn-share" class="btn" aria-haspopup="dialog" aria-expanded="false" aria-label="Compartir esta vista" title="Compartir: copiar un enlace o descargar una imagen"></button>
-      <button id="btn-help" class="btn btn-icon" aria-label="Ayuda de teclado y ratón" title="Ayuda (?)"></button>
-      <button id="btn-pedia" class="btn" aria-label="Abrir el Almanaque" title="Qué significa cada número y de dónde sale"></button>
+      <button id="btn-share" class="btn" data-i18n-attr="aria-label,title" aria-haspopup="dialog" aria-expanded="false" aria-label="Compartir esta vista" title="Compartir: copiar un enlace o descargar una imagen"></button>
+      <button id="btn-help" class="btn btn-icon" data-i18n-attr="aria-label,title" aria-label="Ayuda de teclado y ratón" title="Ayuda (?)"></button>
+      <button id="btn-pedia" class="btn" data-i18n-attr="aria-label,title" aria-label="Abrir el Almanaque" title="Qué significa cada número y de dónde sale"></button>
     </div>
   </header>
 
-  <canvas id="map" role="img" aria-label="Mapa hexagonal de Galicia"></canvas>
+  <canvas id="map" data-i18n-attr="aria-label" role="img" aria-label="Mapa hexagonal de Galicia"></canvas>
 
   <div id="tooltip" class="tooltip" hidden></div>
-  <aside id="city-panel" class="panel" hidden role="region" aria-label="Detalles"></aside>
+  <aside id="city-panel" data-i18n-attr="aria-label" class="panel" hidden role="region" aria-label="Detalles"></aside>
 
   <div id="lens-area">
-    <div id="lens-picker" class="panel lens-picker" hidden role="dialog" aria-label="Elegir una lente"></div>
-    <div id="legend" class="panel legend" hidden role="group" aria-label="Leyenda de la lente"></div>
-    <div id="lens-dock" class="panel lens-dock" role="toolbar" aria-label="Lentes del mapa">
-      <button id="btn-res" class="lens-btn res-toggle" aria-pressed="true" aria-label="Recursos en las casillas (R)" title="Mostrar u ocultar los recursos en las casillas (R)" hidden></button>
+    <div id="lens-picker" data-i18n-attr="aria-label" class="panel lens-picker" hidden role="dialog" aria-label="Elegir una lente"></div>
+    <div id="legend" data-i18n-attr="aria-label" class="panel legend" hidden role="group" aria-label="Leyenda de la lente"></div>
+    <div id="lens-dock" data-i18n-attr="aria-label" class="panel lens-dock" role="toolbar" aria-label="Lentes del mapa">
+      <button id="btn-res" data-i18n-attr="aria-label,title" class="lens-btn res-toggle" aria-pressed="true" aria-label="Recursos en las casillas (R)" title="Mostrar u ocultar los recursos en las casillas (R)" hidden></button>
       <div id="lens-quick" class="lens-quick"></div>
       <button id="btn-lenses" class="lens-btn lens-more" aria-haspopup="dialog" aria-expanded="false" aria-controls="lens-picker"></button>
     </div>
-    <div id="credits" class="credits" role="contentinfo" aria-label="Créditos de los datos">
-      <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© colaboradores de OpenStreetMap</a> ·
-      © Instituto Geográfico Nacional, CC BY 4.0 ign.es · Fuente: <a href="https://www.ige.gal" target="_blank" rel="noopener">IGE</a> e <a href="https://www.ine.es" target="_blank" rel="noopener">INE</a><span class="cr-wide"> · Obra derivada de MDT200 2015 CC-BY 4.0 ign.es · Basado en datos abiertos <a href="https://movilidad-opendata.mitma.es" target="_blank" rel="noopener">MITMA</a> · © ESA WorldCover · © Unión Europea, EFFIS · Caminos: CC-BY 4.0 FEAACS · Centros y oferta de FP: Xunta de Galicia (CC BY-SA 4.0)</span> ·
-      <button type="button" data-pedia="Sources">Todas las fuentes</button>
+    <div id="credits" data-i18n-attr="aria-label" class="credits" role="contentinfo" aria-label="Créditos de los datos">
+      <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" data-i18n>© colaboradores de OpenStreetMap</a> ·
+      <span data-i18n>© Instituto Geográfico Nacional, CC BY 4.0 ign.es · Fuente:</span> <a href="https://www.ige.gal" target="_blank" rel="noopener">IGE</a> <span data-i18n>e</span> <a href="https://www.ine.es" target="_blank" rel="noopener">INE</a><span class="cr-wide"> · <span data-i18n>Obra derivada de MDT200 2015 CC-BY 4.0 ign.es · Basado en datos abiertos</span> <a href="https://movilidad-opendata.mitma.es" target="_blank" rel="noopener">MITMA</a> · <span data-i18n>© ESA WorldCover · © Unión Europea, EFFIS · Caminos: CC-BY 4.0 FEAACS · Centros y oferta de FP: Xunta de Galicia (CC BY-SA 4.0)</span></span> ·
+      <button type="button" data-pedia="Sources" data-i18n>Todas las fuentes</button>
     </div>
   </div>
 
-  <div id="minimap-wrap" class="panel"><canvas id="minimap" aria-label="Minimapa: pulsa para ir a un punto" role="img"></canvas></div>
-  <button id="btn-minimap" class="panel minimap-toggle" aria-pressed="false" aria-controls="minimap-wrap" aria-label="Mostrar el minimapa"></button>
+  <div id="minimap-wrap" class="panel"><canvas id="minimap" data-i18n-attr="aria-label" aria-label="Minimapa: pulsa para ir a un punto" role="img"></canvas></div>
+  <button id="btn-minimap" data-i18n-attr="aria-label" class="panel minimap-toggle" aria-pressed="false" aria-controls="minimap-wrap" aria-label="Mostrar el minimapa"></button>
 
-  <div id="search-results" class="panel search-results" role="listbox" aria-label="Resultados de búsqueda" hidden></div>
-  <div id="share-pop" class="panel share-pop" role="dialog" aria-label="Compartir" hidden></div>
-  <div id="yield-report" class="panel yield-report" role="dialog" aria-label="Informe de Galicia" tabindex="-1" hidden></div>
+  <div id="search-results" data-i18n-attr="aria-label" class="panel search-results" role="listbox" aria-label="Resultados de búsqueda" hidden></div>
+  <div id="share-pop" data-i18n-attr="aria-label" class="panel share-pop" role="dialog" aria-label="Compartir" hidden></div>
+  <div id="yield-report" data-i18n-attr="aria-label" class="panel yield-report" role="dialog" aria-label="Informe de Galicia" tabindex="-1" hidden></div>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <div id="announce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
   <div id="pedia" class="modal" hidden>
-    <div class="modal-card panel" role="dialog" aria-modal="true" aria-label="Almanaque">
-      <button class="close icon-btn" data-close aria-label="Cerrar el Almanaque">✕</button>
-      <nav id="pedia-nav" aria-label="Páginas del Almanaque"></nav>
+    <div class="modal-card panel" role="dialog" aria-modal="true" aria-label="Almanaque" data-i18n-attr="aria-label">
+      <button class="close icon-btn" data-close data-i18n-attr="aria-label" aria-label="Cerrar el Almanaque">✕</button>
+      <nav id="pedia-nav" data-i18n-attr="aria-label" aria-label="Páginas del Almanaque"></nav>
       <article id="pedia-body"></article>
     </div>
   </div>
@@ -77,7 +77,7 @@
     <div class="help-card panel" role="dialog" aria-modal="true" aria-labelledby="help-title"></div>
   </div>
 
-  <div id="loading">Midiendo el terreno…</div>
-  <script type="module" src="js/main.js"></script>
+  <div id="loading" data-i18n>Midiendo el terreno…</div>
+  <script type="module" src="js/boot.js"></script>
 </body>
 </html>

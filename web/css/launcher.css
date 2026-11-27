@@ -39,10 +39,22 @@
   #adv-launcher .al-src { margin-top: 2px; font-size: 10.5px; color: var(--ink-dim); }
   .al-cta { margin-top: 8px; padding: 5px 12px; }
   .al-mark, .al-short, .al-all { display: none; }
-  #adv-launcher.al-compact .al-find { display: none; }
   #adv-launcher.al-compact .al-list button { padding-top: 1px; padding-bottom: 1px; }
   #adv-launcher.al-compact .al-list .adv-emblem { width: 24px; height: 24px; }
   #adv-launcher.al-compact .al-list button { font-size: 14px; }
+}
+/* A short window: the figure and its button on one line, the short text under them; al-bare drops it. */
+@media (min-width: 1100px) {
+  #adv-launcher.al-compact .al-find:not([hidden]) {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "fig cta" "txt txt";
+    column-gap: 8px; align-items: center; margin-top: 6px; padding-top: 6px;
+  }
+  #adv-launcher.al-compact .al-fig { grid-area: fig; font-size: 20px; }
+  #adv-launcher.al-compact .al-txt { grid-area: txt; font-size: 11px; }
+  #adv-launcher.al-compact .al-cta { grid-area: cta; margin-top: 0; padding: 3px 12px; }
+  #adv-launcher.al-compact .al-find .al-long, #adv-launcher.al-compact .al-src { display: none; }
+  #adv-launcher.al-compact .al-find .al-short { display: inline; }
+  #adv-launcher.al-bare .al-find:not([hidden]) { display: none; }
 }
 /* A narrow window: medallions only, so the list does not cover the west coast. The name is in the tooltip. */
 @media (min-width: 701px) and (max-width: 1099px) {

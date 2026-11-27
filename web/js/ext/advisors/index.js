@@ -13,26 +13,27 @@ import { emblem } from "./core/emblems.js";
 import { frameNation } from "./core/frame.js";
 import { esc, el } from "./core/util.js";
 import { icon } from "../../ui/icon.js";
+import { t } from "../../i18n.js";
 
 export const ADVISORS = [
-  { id: "energy", name: "Energía y recursos", role: "Intendencia de recursos", color: "#d98a2b", dark: "#3a1f08", blurb: "Parques eólicos, canteras y lonjas: los recursos que salen en el mapa.", load: () => import("./views/energy.js") },
-  { id: "economy", name: "Economía", role: "Tesorería", color: "#c9a43a", dark: "#3a2c08", blurb: "El PIB de cada lugar y los sectores en los que trabaja su gente.", load: () => import("./views/economy.js") },
-  { id: "people", name: "Población", role: "Oficina del censo", color: "#c46a4f", dark: "#3a140c", blurb: "Dónde vive la gente, qué edad tiene y dónde nació.", load: () => import("./views/people.js") },
-  { id: "prosperity", name: "Prosperidad", role: "Mayordomía del hogar", color: "#3f9c82", dark: "#082a22", blurb: "Renta por persona, desigualdad y paro registrado.", load: () => import("./views/prosperity.js") },
-  { id: "knowledge", name: "Conocimiento", role: "Academia real", color: "#4a86d6", dark: "#0a1c3a", blurb: "Estudios, ocupaciones y la rama más cercana al trabajo científico.", load: () => import("./views/knowledge.js") },
-  { id: "fp", name: "Formación profesional", role: "Gremio de oficios", color: "#e0653f", dark: "#3a1208", blurb: "Qué ciclos se enseñan, dónde, y si cuadran con las empresas de cada comarca.", load: () => import("./views/fp.js") },
-  { id: "land", name: "Territorio", role: "Agrimensura mayor", color: "#6e9a3c", dark: "#18280a", blurb: "Suelo, clima, incendios y zonas inundables.", load: () => import("./views/land.js") },
-  { id: "commerce", name: "Comercio", role: "Maestría del comercio", color: "#2fa4b8", dark: "#062630", blurb: "Un día de viajes entre comarcas, los puertos, los aeropuertos y las vías.", load: () => import("./views/commerce.js") },
-  { id: "culture", name: "Cultura", role: "Custodia de las maravillas", color: "#c25b9a", dark: "#2e0c22", blurb: "Patrimonio Mundial, bienes de interés cultural, el parque nacional y el Camino de Santiago.", load: () => import("./views/culture.js") },
-  { id: "explorer", name: "Explorador", role: "Cartografía", color: "#9a7bc9", dark: "#1e1236", blurb: "Cruza las cifras como quieras: nivel, columnas y gráfico.", load: () => import("./views/explorer.js") },
+  { id: "energy", name: t("Energía y recursos"), role: t("Intendencia de recursos"), color: "#d98a2b", dark: "#3a1f08", blurb: t("Parques eólicos, canteras y lonjas: los recursos que salen en el mapa."), load: () => import("./views/energy.js") },
+  { id: "economy", name: t("Economía"), role: t("Tesorería"), color: "#c9a43a", dark: "#3a2c08", blurb: t("El PIB de cada lugar y los sectores en los que trabaja su gente."), load: () => import("./views/economy.js") },
+  { id: "people", name: t("Población"), role: t("Oficina del censo"), color: "#c46a4f", dark: "#3a140c", blurb: t("Dónde vive la gente, qué edad tiene y dónde nació."), load: () => import("./views/people.js") },
+  { id: "prosperity", name: t("Prosperidad"), role: t("Mayordomía del hogar"), color: "#3f9c82", dark: "#082a22", blurb: t("Renta por persona, desigualdad y paro registrado."), load: () => import("./views/prosperity.js") },
+  { id: "knowledge", name: t("Conocimiento"), role: t("Academia real"), color: "#4a86d6", dark: "#0a1c3a", blurb: t("Estudios, ocupaciones y la rama más cercana al trabajo científico."), load: () => import("./views/knowledge.js") },
+  { id: "fp", name: t("Formación profesional"), role: t("Gremio de oficios"), color: "#e0653f", dark: "#3a1208", blurb: t("Qué ciclos se enseñan, dónde, y si cuadran con las empresas de cada comarca."), load: () => import("./views/fp.js") },
+  { id: "land", name: t("Territorio"), role: t("Agrimensura mayor"), color: "#6e9a3c", dark: "#18280a", blurb: t("Suelo, clima, incendios y zonas inundables."), load: () => import("./views/land.js") },
+  { id: "commerce", name: t("Comercio"), role: t("Maestría del comercio"), color: "#2fa4b8", dark: "#062630", blurb: t("Un día de viajes entre comarcas, los puertos, los aeropuertos y las vías."), load: () => import("./views/commerce.js") },
+  { id: "culture", name: t("Cultura"), role: t("Custodia de las maravillas"), color: "#c25b9a", dark: "#2e0c22", blurb: t("Patrimonio Mundial, bienes de interés cultural, el parque nacional y el Camino de Santiago."), load: () => import("./views/culture.js") },
+  { id: "explorer", name: t("Explorador"), role: t("Cartografía"), color: "#9a7bc9", dark: "#1e1236", blurb: t("Cruza las cifras como quieras: nivel, columnas y gráfico."), load: () => import("./views/explorer.js") },
 ];
 const byId = new Map(ADVISORS.map((a) => [a.id, a]));
 // The council picker groups its advisors (any advisor not listed here is added to the last group).
 const COUNCIL = (() => {
   const g = [
-    { label: "Riqueza y trabajo", ids: ["economy", "prosperity", "commerce", "energy"] },
-    { label: "Gente y territorio", ids: ["people", "knowledge", "fp", "culture", "land"] },
-    { label: "Tus preguntas", ids: ["explorer"] },
+    { label: t("Riqueza y trabajo"), ids: ["economy", "prosperity", "commerce", "energy"] },
+    { label: t("Gente y territorio"), ids: ["people", "knowledge", "fp", "culture", "land"] },
+    { label: t("Tus preguntas"), ids: ["explorer"] },
   ];
   const listed = new Set(g.flatMap((x) => x.ids));
   g[g.length - 1].ids.push(...ADVISORS.filter((a) => !listed.has(a.id)).map((a) => a.id));
@@ -69,11 +70,11 @@ export function install(app) {
 
   // --- top-bar button ---------------------------------------------------------------------------------------------
   const btn = app.ui.addTopButton({
-    id: "btn-advisors", icon: "g-people", label: "Asesores", title: "Asesores: explora los datos que hay detrás del mapa",
+    id: "btn-advisors", icon: "g-people", label: t("Asesores"), title: t("Asesores: explora los datos que hay detrás del mapa"),
     onClick: () => (app.mode === "advisor" ? app.setMode(null) : app.setMode("advisor", { id: lastId })),
   });
   if (btn) {
-    btn.innerHTML = `<svg class="icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.5 3 7v2h18V7z" fill="currentColor"/><path d="M5 10.5h2.6v7H5zM10.7 10.5h2.6v7h-2.6zM16.4 10.5H19v7h-2.6zM3.5 19h17v2.5h-17z" fill="currentColor"/></svg><span class="lbl">Asesores</span>`;
+    btn.innerHTML = `<svg class="icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.5 3 7v2h18V7z" fill="currentColor"/><path d="M5 10.5h2.6v7H5zM10.7 10.5h2.6v7h-2.6zM16.4 10.5H19v7h-2.6zM3.5 19h17v2.5h-17z" fill="currentColor"/></svg><span class="lbl">${t("Asesores")}</span>`;
     btn.setAttribute("aria-pressed", "false");
   }
   app.on("mode", ({ name }) => {
@@ -84,7 +85,7 @@ export function install(app) {
 
   // --- dock shell -------------------------------------------------------------------------------------------------
   function shell() {
-    dock = app.ui.dock("left", { width: dockW(), label: "Asesores" });
+    dock = app.ui.dock("left", { width: dockW(), label: t("Asesores") });
     if (dock.querySelector(".adv-root")) return dock.querySelector(".adv-root");
     dock.innerHTML = "";
     dock.classList.add("adv-dock");
@@ -92,19 +93,19 @@ export function install(app) {
     root.innerHTML = `
       <div class="adv-grip" aria-hidden="true"></div>
       <header class="adv-head">
-        <button type="button" class="adv-council-btn" data-adv="council" title="Todos los asesores">${icon("g-people", "👥", { size: 14 })}<span>Consejo</span></button>
-        <nav class="adv-tabs" role="tablist" aria-label="Asesores">${ADVISORS.map((a) => `<button type="button" role="tab" data-adv="${a.id}" aria-selected="false" title="${esc(`${a.name}: ${a.role}`)}" style="--adv:${a.color}">${emblem(a, 30)}<span class="sr-only">${esc(a.name)}</span></button>`).join("")}</nav>
-        <button type="button" class="icon-btn adv-close" aria-label="Cerrar los asesores (Esc)" title="Cerrar (Esc)">${icon("close", "✕", { size: 12 })}</button>
+        <button type="button" class="adv-council-btn" data-adv="council" title="${t("Todos los asesores")}">${icon("g-people", "👥", { size: 14 })}<span>${t("Consejo")}</span></button>
+        <nav class="adv-tabs" role="tablist" aria-label="${t("Asesores")}">${ADVISORS.map((a) => `<button type="button" role="tab" data-adv="${a.id}" aria-selected="false" title="${esc(`${a.name}: ${a.role}`)}" style="--adv:${a.color}">${emblem(a, 30)}<span class="sr-only">${esc(a.name)}</span></button>`).join("")}</nav>
+        <button type="button" class="icon-btn adv-close" aria-label="${t("Cerrar los asesores (Esc)")}" title="${t("Cerrar (Esc)")}">${icon("close", "✕", { size: 12 })}</button>
       </header>
       <div class="adv-main" tabindex="-1"></div>`;
     dock.appendChild(root);
     root.addEventListener("click", (e) => {
-      const t = e.target.closest("button");
-      if (!t) return;
-      if (t.classList.contains("adv-close")) return app.setMode(null);
-      if (t.dataset.adv) return switchTo(t.dataset.adv === "council" ? null : t.dataset.adv);
-      if (t.dataset.pedia) return app.pedia?.open?.(t.dataset.pedia);
-      if (t.hasAttribute("data-frame")) return link.frame() || frameNation(app);
+      const bt = e.target.closest("button");
+      if (!bt) return;
+      if (bt.classList.contains("adv-close")) return app.setMode(null);
+      if (bt.dataset.adv) return switchTo(bt.dataset.adv === "council" ? null : bt.dataset.adv);
+      if (bt.dataset.pedia) return app.pedia?.open?.(bt.dataset.pedia);
+      if (bt.hasAttribute("data-frame")) return link.frame() || frameNation(app);
     });
     root.querySelector(".adv-tabs").addEventListener("keydown", (e) => {
       if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
@@ -168,13 +169,13 @@ export function install(app) {
       main.querySelectorAll(".adv-card").forEach((c) => c.addEventListener("click", () => switchTo(c.dataset.adv)));
       return;
     }
-    main.innerHTML = `${titleHtml(adv)}<div class="adv-body"><div class="adv-loading">Reuniendo las cifras de ${esc(adv.name)}…</div></div>`;
+    main.innerHTML = `${titleHtml(adv)}<div class="adv-body"><div class="adv-loading">${esc(t("Reuniendo las cifras de {name}…", { name: adv.name }))}</div></div>`;
     let mod;
     try {
       [mod] = await Promise.all([adv.load(), ensureData()]);
     } catch (err) {
       console.error(err);
-      if (my === token) main.querySelector(".adv-body").innerHTML = `<p class="adv-empty pad">No se ha podido cargar este asesor (${esc(err.message || err)}).</p>`;
+      if (my === token) main.querySelector(".adv-body").innerHTML = `<p class="adv-empty pad">${esc(t("No se ha podido cargar este asesor ({error}).", { error: err.message || err }))}</p>`;
       return;
     }
     if (my !== token || app.mode !== "advisor") return;
@@ -222,7 +223,7 @@ export function install(app) {
       a.api = (await mod.mount(ctx)) || {};
     } catch (err) {
       console.error(`advisor "${adv.id}" failed`, err);
-      body.insertAdjacentHTML("beforeend", `<p class="adv-empty pad">Algo ha fallado al dibujar este asesor.</p>`);
+      body.insertAdjacentHTML("beforeend", `<p class="adv-empty pad">${t("Algo ha fallado al dibujar este asesor.")}</p>`);
       a.api = {};
     }
     loading?.remove();
@@ -248,11 +249,11 @@ export function install(app) {
   }
 
   function councilHtml() {
-    return `<div class="adv-title council"><div class="adv-titles"><div class="adv-kind">Tu consejo</div><h2>Asesores</h2>
-      <p>Cada asesor abre un panel sobre una parte de los datos de Galicia. Pasa el puntero por cualquier cosa para verla en el mapa, o por el mapa para encontrarla en los gráficos. Pulsa para entrar en detalle.</p></div></div>
+    return `<div class="adv-title council"><div class="adv-titles"><div class="adv-kind">${t("Tu consejo")}</div><h2>${t("Asesores")}</h2>
+      <p>${t("Cada asesor abre un panel sobre una parte de los datos de Galicia. Pasa el puntero por cualquier cosa para verla en el mapa, o por el mapa para encontrarla en los gráficos. Pulsa para entrar en detalle.")}</p></div></div>
       ${COUNCIL.map((g) => `<h4 class="adv-council-h">${esc(g.label)}</h4><div class="adv-council">${g.ids.map((id) => byId.get(id)).filter(Boolean).map((a) => `<button type="button" class="adv-card" data-adv="${a.id}" style="--adv:${a.color}">
         ${emblem(a, 48)}<span class="t"><span class="r">${esc(a.role)}</span><b>${esc(a.name)}</b><span class="d">${esc(a.blurb)}</span></span></button>`).join("")}</div>`).join("")}
-      <p class="adv-note pad">Todas las cifras salen de datos publicados: IGE, INE, MeteoGalicia y otros servicios de la Xunta, IGN, IGME, MITECO, EFFIS y ESA WorldCover (Copernicus), OpenStreetMap y Wikidata. Los viajes están basados en datos abiertos MITMA. Cada panel enumera sus fuentes y avisos al final.</p>`;
+      <p class="adv-note pad">${t("Todas las cifras salen de datos publicados: IGE, INE, MeteoGalicia y otros servicios de la Xunta, IGN, IGME, MITECO, EFFIS y ESA WorldCover (Copernicus), OpenStreetMap y Wikidata. Los viajes están basados en datos abiertos MITMA. Cada panel enumera sus fuentes y avisos al final.")}</p>`;
   }
 
   // --- map → dashboard --------------------------------------------------------------------------------------------

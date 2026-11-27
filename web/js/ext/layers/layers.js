@@ -13,6 +13,7 @@ import { visibleSites, siteSize, hitSites } from "./model.js";
 import { POP_SCALE } from "../../render/art/city.js";
 import { REF_KM } from "../../render/art/lod.js";
 import { esc } from "../../format.js";
+import { t, prep } from "../../i18n.js";
 
 function segDist(px, py, ax, ay, bx, by) {
   const dx = bx - ax, dy = by - ay;
@@ -42,8 +43,10 @@ export function makeLayers(model, on, { tips = {}, app = null } = {}) {
   const moved = (it, html) => {
     if (!html || !it.nudged || typeof html !== "string") return html;
     const city = m.w.cityByCell.get(it.cell);
-    const where = city ? `la casilla de la ciudad de ${esc(city.name)}` : "la casilla de una ciudad";
-    return `${html}<br><span class="muted">Dibujado en una casilla vecina para que se vea; su posición real cae en ${where}.</span>`;
+    const note = city
+      ? t("Dibujado en una casilla vecina para que se vea; su posición real cae en la casilla de la ciudad {lugar}.", { lugar: esc(prep("de", city.name)) })
+      : t("Dibujado en una casilla vecina para que se vea; su posición real cae en la casilla de una ciudad.");
+    return `${html}<br><span class="muted">${note}</span>`;
   };
   const ver = () => `v${m.version}`;
   const grid = () => m.w.grid;

@@ -19,6 +19,7 @@ import { resourceFilterSig, layerActive, layerError, Z as LAYER_Z } from "./rend
 import { installExtensions, isEnabled } from "./ext/index.js";
 import { initShare } from "./app/share.js";
 import { initHelp } from "./app/help.js";
+import { translateData, langHashKey, mountLangSwitch, t, prep } from "./i18n.js";
 
 const { drawStatic, drawOverlay, OCEAN_BG } = mapRender;
 
@@ -26,7 +27,7 @@ async function loadJSON(name, optional = false) {
   try {
     const r = await fetch(`data/${name}.json`);
     if (!r.ok) throw new Error(`data/${name}.json: HTTP ${r.status}`);
-    return await r.json();
+    return translateData(name, await r.json()); // galego text fields (web/i18n/campos.json); castellano: as is
   } catch (err) {
     if (optional) return null;
     throw err;
@@ -549,12 +550,12 @@ async function main() {
     announceEl.textContent = "";
     setTimeout(() => (announceEl.textContent = text), 30);
   };
-  const stateName = (idx) => states?.[idx]?.name || w.raw.states[idx]?.name || "Comarca";
+  const stateName = (idx) => states?.[idx]?.name || w.raw.states[idx]?.name || t("Comarca");
 
   function describeCanvas() {
-    const parts = ["Mapa hexagonal de Galicia", state.lens ? `coloreado por la lente ${state.lens.name}` : "mostrando el terreno"];
-    if (state.selectedCity) parts.push(`${state.selectedCity.name} seleccionada`);
-    else if (state.selectedState != null) parts.push(`${stateName(state.selectedState)} seleccionada`);
+    const parts = [t("Mapa hexagonal de Galicia"), state.lens ? t("coloreado por la lente {name}", { name: state.lens.name }) : t("mostrando el terreno")];
+    if (state.selectedCity) parts.push(t("{name} seleccionada", { name: state.selectedCity.name }));
+    else if (state.selectedState != null) parts.push(t("{name} seleccionada", { name: stateName(state.selectedState) }));
     canvas.setAttribute("aria-label", parts.join(", "));
   }
 
@@ -572,7 +573,7 @@ async function main() {
     state.selectedState = null;
     app.panels.city(city, panelCtx());
     if (fly && city.cell != null) focusCity(city);
-    announce(`${city.name} seleccionada. ${city.full || ""}`);
+    announce(t("{name} seleccionada. {full}", { name: city.name, full: city.full || "" }));
     afterSelect();
   }
 
@@ -582,7 +583,7 @@ async function main() {
     state.selectedState = idx;
     app.panels.state(idx, panelCtx());
     if (fly) focusState(idx);
-    announce(`${stateName(idx)} seleccionada.`);
+    announce(t("{name} seleccionada.", { name: stateName(idx) }));
     afterSelect();
   }
 
@@ -591,7 +592,7 @@ async function main() {
     state.selectedCity = null;
     state.selectedState = null;
     app.panels.close();
-    if (had) announce("Selección cerrada.");
+    if (had) announce(t("Selección cerrada."));
     afterSelect();
   }
 
@@ -682,12 +683,12 @@ async function main() {
     if (b) b.innerHTML = html;
     return b;
   };
-  setBtn("btn-share", `${icon("share", "🔗", { size: 15 })}<span class="lbl">Compartir</span>`);
+  setBtn("btn-share", `${icon("share", "🔗", { size: 15 })}<span class="lbl">${t("Compartir")}</span>`);
   setBtn("btn-help", icon("help", "?", { size: 15 }));
-  setBtn("btn-pedia", `${icon("pedia", "📖", { size: 16 })}<span class="lbl">Almanaque</span>`);
+  setBtn("btn-pedia", `${icon("pedia", "📖", { size: 16 })}<span class="lbl">${t("Almanaque")}</span>`);
   const searchIc = document.querySelector(".search-ic");
   if (searchIc) searchIc.innerHTML = icon("search", "🔍", { size: 14 });
-  document.querySelector(".search-kbd")?.setAttribute("title", "Press / or Ctrl K to search");
+  document.querySelector(".search-kbd")?.setAttribute("title", t("Pulsa / o Ctrl K para buscar"));
 
   const search = initSearch({
     cities,
@@ -842,7 +843,7 @@ async function main() {
   const resBtn = document.getElementById("btn-res");
   if (resBtn) {
     resBtn.hidden = !w.resources;
-    resBtn.innerHTML = `${icon("resources", "⛏️", { size: 15 })}<span>Recursos</span>`;
+    resBtn.innerHTML = `${icon("resources", "⛏️", { size: 15 })}<span>${t("Recursos")}</span>`;
     const sync = () => {
       resBtn.classList.toggle("active", state.showResources);
       resBtn.setAttribute("aria-pressed", String(state.showResources));
@@ -861,10 +862,14 @@ async function main() {
       const on = !document.body.classList.contains("minimap-on");
       document.body.classList.toggle("minimap-on", on);
       mmBtn.setAttribute("aria-pressed", String(on));
-      mmBtn.setAttribute("aria-label", on ? "Ocultar el minimapa" : "Mostrar el minimapa");
+      mmBtn.setAttribute("aria-label", on ? t("Ocultar el minimapa") : t("Mostrar el minimapa"));
       minimap.draw();
     };
   }
+
+  // Language: the GL | ES selector in the top bar; #lang= only when someone chose it (i18n.js).
+  url.register("lang", langHashKey());
+  mountLangSwitch(document.querySelector("#topbar .tb-buttons"));
 
   // Map layer switches (app.ui.addMapToggle), in a menu next to the Resources toggle; kept in the hash (layers=).
   const mapToggles = createMapToggles({
@@ -1305,5 +1310,5 @@ main().catch((err) => {
   const el = document.getElementById("loading");
   if (!el) return;
   el.classList.add("error");
-  el.textContent = `No se pudieron cargar los datos del mapa (${err.message}). Ejecuta "uv run python -m pipeline all" y sirve web/ por HTTP.`;
+  el.textContent = t("No se pudieron cargar los datos del mapa ({msg}). Ejecuta \"uv run python -m pipeline all\" y sirve web/ por HTTP.", { msg: err.message });
 });

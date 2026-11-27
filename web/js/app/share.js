@@ -1,11 +1,12 @@
 // Share popover: copy a link to the current view, or download a 1600×900 PNG of it with a caption strip.
 import { drawIcon, hasIcon } from "../icons.js";
 import { icon } from "../ui/icon.js";
+import { t } from "../i18n.js";
 
 // The address printed on shared images. Set it to the published site (e.g. "example.com/galicia"); when left
 // empty, the page's own host and path are used, except on a local dev server, where SITE_FALLBACK is printed.
 export const SITE_URL = ""; // sin web publicada todavía: se usa el host de la página (o SITE_FALLBACK en local)
-const SITE_FALLBACK = "Galicia en hexágonos";
+const SITE_FALLBACK = t("Galicia en hexágonos");
 
 export function siteLabel() {
   if (SITE_URL) return SITE_URL;
@@ -25,7 +26,7 @@ export const IMG_H = 900;
 export const CAPTION_H = 118;
 const SERIF = '"Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif';
 const SANS = '-apple-system, "Segoe UI", system-ui, sans-serif';
-const CREDIT = "Datos: IGE, INE, MeteoGalicia, CNIG, Copernicus";
+const CREDIT = t("Datos: IGE, INE, MeteoGalicia, CNIG, Copernicus");
 
 async function copyText(text) {
   try {
@@ -119,7 +120,7 @@ export function composeImage(info, { height = IMG_H } = {}) {
   spaced(ctx, 0);
   ctx.fillStyle = "#b9ab88";
   ctx.font = `italic 17px ${SERIF}`;
-  ctx.fillText("Un atlas de estrategia de la Galicia real", 114, cy + 28);
+  ctx.fillText(t("Un atlas de estrategia de la Galicia real"), 114, cy + 28);
 
   // Lens + legend ramp
   const mx = 640;
@@ -130,7 +131,7 @@ export function composeImage(info, { height = IMG_H } = {}) {
   ctx.fillStyle = "#ecd08e";
   ctx.font = `24px ${SERIF}`;
   spaced(ctx, 1.5);
-  ctx.fillText((lens ? lens.name : "Terreno").toUpperCase() + (lens ? " · LENTE" : ""), mx + 50, cy - 8);
+  ctx.fillText((lens ? lens.name : t("Terreno")).toUpperCase() + (lens ? " · " + t("LENTE") : ""), mx + 50, cy - 8);
   spaced(ctx, 0);
   if (lens?.ramp?.length) {
     const rx = mx + 50, ry = cy + 4, rw = 330, rh = 12;
@@ -150,7 +151,7 @@ export function composeImage(info, { height = IMG_H } = {}) {
   } else {
     ctx.font = `15px ${SANS}`;
     ctx.fillStyle = "#b9ab88";
-    ctx.fillText("Cobertura del suelo, relieve, ríos y recursos", mx + 50, cy + 16);
+    ctx.fillText(t("Cobertura del suelo, relieve, ríos y recursos"), mx + 50, cy + 16);
   }
 
   // Selection, credits, site
@@ -161,7 +162,7 @@ export function composeImage(info, { height = IMG_H } = {}) {
     ctx.font = `13px ${SANS}`;
     ctx.fillStyle = "#b9ab88";
     spaced(ctx, 2);
-    ctx.fillText(sel.kind === "state" ? "COMARCA" : "CIUDAD", rx, cy - 30);
+    ctx.fillText(sel.kind === "state" ? t("COMARCA") : t("CIUDAD"), rx, cy - 30);
     spaced(ctx, 0);
     ctx.font = `bold 24px ${SERIF}`;
     ctx.fillStyle = "#f3e6c4";
@@ -213,11 +214,11 @@ export function initShare(opts) {
   let restore = null;
 
   pop.innerHTML = `
-    <div class="sp-title">Compartir esta vista</div>
-    <button class="sp-item" data-act="copy">${icon("share", "🔗", { size: 16 })}<span>Copiar enlace</span></button>
-    <button class="sp-item" data-act="image">${icon("terrain", "🖼️", { size: 16 })}<span>Descargar imagen <span class="muted">PNG 1600×900</span></span></button>
+    <div class="sp-title">${t("Compartir esta vista")}</div>
+    <button class="sp-item" data-act="copy">${icon("share", "🔗", { size: 16 })}<span>${t("Copiar enlace")}</span></button>
+    <button class="sp-item" data-act="image">${icon("terrain", "🖼️", { size: 16 })}<span>${t("Descargar imagen")} <span class="muted">PNG 1600×900</span></span></button>
     <div class="sp-status" role="status" aria-live="polite"></div>
-    <input class="sp-url" type="text" readonly hidden aria-label="Enlace a esta vista">`;
+    <input class="sp-url" type="text" readonly hidden aria-label="${t("Enlace a esta vista")}">`;
   const status = pop.querySelector(".sp-status");
   const urlBox = pop.querySelector(".sp-url");
 
@@ -255,17 +256,17 @@ export function initShare(opts) {
       opts.beforeCopy?.();
       const link = location.href;
       if (await copyText(link)) {
-        status.textContent = "Enlace copiado al portapapeles";
-        opts.onToast?.("Enlace copiado");
+        status.textContent = t("Enlace copiado al portapapeles");
+        opts.onToast?.(t("Enlace copiado"));
       } else {
-        status.textContent = "Copia este enlace:";
+        status.textContent = t("Copia este enlace:");
         urlBox.hidden = false;
         urlBox.value = link;
         urlBox.focus();
         urlBox.select();
       }
     } else if (b.dataset.act === "image") {
-      status.textContent = "Dibujando el mapa…";
+      status.textContent = t("Dibujando el mapa…");
       await new Promise((r) => setTimeout(r, 30)); // let the status paint
       try {
         const cv = composeImage(opts.getInfo());
@@ -278,10 +279,10 @@ export function initShare(opts) {
         a.click();
         a.remove();
         setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-        status.textContent = `Guardado ${a.download}`;
+        status.textContent = t("Guardado {file}", { file: a.download });
       } catch (err) {
         console.warn(err);
-        status.textContent = "No se pudo crear la imagen en este navegador.";
+        status.textContent = t("No se pudo crear la imagen en este navegador.");
       }
     }
   });

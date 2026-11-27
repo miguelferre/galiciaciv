@@ -1,5 +1,6 @@
 import { esc } from "../format.js";
 import { icon, glyph } from "./icon.js";
+import { t } from "../i18n.js";
 import { statDefs, fmtStat } from "./yieldReport.js";
 
 // The national stats are buttons: each opens its report (ui/yieldReport.js, wired in main.js).
@@ -7,9 +8,9 @@ export function renderTopbar(nation) {
   const items = statDefs(nation).map((d) => {
     const ic = d.yield ? glyph(d.yield, 17) : icon(d.iconId, d.emoji, { size: 17 });
     const value = fmtStat(d, d.value);
-    const tip = `${d.name}: ${d.description} Pulsa para ver el informe.`;
+    const tip = t("{name}: {description} Pulsa para ver el informe.", { name: d.name, description: d.description });
     return `<button type="button" class="yield" data-report="${esc(d.key)}" aria-expanded="false" aria-haspopup="dialog" aria-controls="yield-report"
-      title="${esc(tip)}" aria-label="${esc(d.name)}: ${esc(value)}. Abrir el informe">
+      title="${esc(tip)}" aria-label="${esc(t("{name}: {value}. Abrir el informe", { name: d.name, value }))}">
       <span class="ico" style="color:${esc(d.color)}">${ic}</span><span style="color:${esc(d.color)}">${esc(value)}</span><span class="caret" aria-hidden="true"></span></button>`;
   });
   const el = document.getElementById("yields");
@@ -22,7 +23,7 @@ export function renderTopbar(nation) {
   watchBarOverflow(document.getElementById("topbar"));
   // Only the year: the vintage (one clause per source) is over 1300 px long and pushed the buttons off the screen.
   const turn = document.getElementById("turn");
-  turn.innerHTML = `Año <b>${esc(nation.year ?? "")}</b>`;
+  turn.innerHTML = `${esc(t("Año"))} <b>${esc(nation.year ?? "")}</b>`;
   turn.title = nation.vintage || "";
 }
 

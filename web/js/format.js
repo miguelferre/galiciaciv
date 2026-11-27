@@ -1,9 +1,11 @@
 // Spanish (Spain) number style: decimal comma, "." or a space as thousands separator, "€" after the number, scales
 // "mil" (10^3), "M" (10^6), "mil M" (10^9, miles de millones) and "B" (10^12, billón).
-const LOCALE = "es-ES";
+// Galego (gl-ES) writes numbers the same way; the locale follows the page language (i18n.js), es-ES as fallback.
+import { locale } from "./i18n.js";
+const LOCALE = () => locale();
 const dec = (x, d) => x.toFixed(d).replace(".", ",");
 const grouped = (n) => {
-  try { return n.toLocaleString(LOCALE, { useGrouping: "always" }); } catch { return n.toLocaleString(LOCALE); }
+  try { return n.toLocaleString(LOCALE(), { useGrouping: "always" }); } catch { return n.toLocaleString("es-ES"); }
 };
 
 // [scale divisor, suffix, decimals under 100 units, decimals from 100 units]

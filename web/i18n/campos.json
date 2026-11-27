@@ -1,0 +1,100 @@
+{
+  "_comentario": "Campos de texto que se traducen en cada fichero de web/data. Rutas: lenses[].name, rule.text, [].title, *.rule. Topónimos, ids y licencias, nunca. Se llena en la tanda 3.",
+  "world": [
+    "tables.water[].name",
+    "tables.relief[].name",
+    "tables.cover[].name",
+    "tables.*[].rule",
+    "tables.notes.*"
+  ],
+  "nation": [
+    "yields[].label",
+    "yields[].description",
+    "industries.*",
+    "vintage",
+    "gdp_vintage"
+  ],
+  "lenses": [
+    "groups[].name",
+    "lenses[].name",
+    "lenses[].unit",
+    "lenses[].description",
+    "vintage"
+  ],
+  "counties": [
+    "fields[].label",
+    "fields[].unit",
+    "fields[].description",
+    "vintage"
+  ],
+  "fp": [
+    "rule",
+    "limits[]",
+    "families[].name",
+    "families[].note",
+    "vintage"
+  ],
+  "trade": [
+    "rule",
+    "path_note",
+    "units.*",
+    "vintage"
+  ],
+  "wonders": [
+    "rules[].name",
+    "rules[].text"
+  ],
+  "camino": [
+    "routes[].name",
+    "routes[].full_name",
+    "rule",
+    "attribution",
+    "vintage"
+  ],
+  "fires": [
+    "vintage"
+  ],
+  "infrastructure": [
+    "rules.*",
+    "road_classes[].name",
+    "rail_tiers[].name"
+  ],
+  "resources": [
+    "types[].name",
+    "types[].unit",
+    "types[].description",
+    "summary.note"
+  ],
+  "districts": [
+    "rule.text",
+    "catalog[].name",
+    "catalog[].short",
+    "catalog[].description",
+    "catalog[].sub.*",
+    "catalog[].badge.label",
+    "catalog[].badge.labels.*",
+    "divisions.*.title",
+    "cities.*.badge.label",
+    "vintage"
+  ],
+  "citizens": [
+    "groups.workforce[].label",
+    "groups.workforce[].short",
+    "groups.age[].label",
+    "groups.age[].short",
+    "groups.education[].label",
+    "groups.education[].short",
+    "groups.nativity[].label",
+    "groups.nativity[].short",
+    "rows.*",
+    "rule.text",
+    "vintage"
+  ],
+  "sources": [
+    "[].title",
+    "[].description",
+    "[].vintage",
+    "[].publisher",
+    "[].license"
+  ]
+}

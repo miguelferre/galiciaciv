@@ -1,5 +1,6 @@
 // Commerce advisor: one day of people's trips between comarcas (MITMA, trade.json; not freight), the ports and airports
 // and the road and rail network (infrastructure.json).
+import { t } from "../../../i18n.js";
 import { esc, fin, el as mk, withAlpha } from "../core/util.js";
 import { int, pct, dec, count3, signedPct } from "../core/fmt.js";
 import { barList, shareBar, stackedBars, swatchLegend, sizeLegend } from "../core/charts.js";
@@ -15,7 +16,7 @@ export async function mount(ctx) {
   const { app, el, link, data } = ctx;
   const [trade, infra] = await Promise.all([app.loadData("trade"), app.loadData("infrastructure")]);
   if (!trade && !infra) {
-    el.innerHTML = `<p class="adv-empty pad">Faltan los datos de viajes y de infraestructuras, así que Comercio no tiene nada que mostrar.</p>`;
+    el.innerHTML = `<p class="adv-empty pad">${t("Faltan los datos de viajes y de infraestructuras, así que Comercio no tiene nada que mostrar.")}</p>`;
     return {};
   }
   const metros = data.levels.metros, comarcas = data.levels.states;
@@ -30,9 +31,9 @@ export async function mount(ctx) {
   // --- headline -------------------------------------------------------------------------------------------------
   const nt = trade?.national_trips || {};
   const head = [];
-  if (trade) head.push({ label: "Viajes en un día", value: count3(nt.galicia), sub: dayText });
-  if (infra) head.push({ label: "Puertos y aeropuertos", value: int((infra.ports || []).length + (infra.airports || []).length), sub: `${int((infra.ports || []).length)} puertos · ${int((infra.airports || []).length)} aeropuertos` });
-  el.insertAdjacentHTML("beforeend", tiles(head) + (trade ? `<p class="adv-callout">Viajes de <b>personas</b> en un solo día, el <b>${esc(dayText)}</b>: no son mercancías ni una media del año. ${int(nt.internal)} empiezan y acaban en Galicia, ${int(nt.outbound)} salen de ella y ${int(nt.inbound)} llegan de fuera. ${attribution}.</p>` : ""));
+  if (trade) head.push({ label: t("Viajes en un día"), value: count3(nt.galicia), sub: dayText });
+  if (infra) head.push({ label: t("Puertos y aeropuertos"), value: int((infra.ports || []).length + (infra.airports || []).length), sub: t("{p} puertos · {a} aeropuertos", { p: int((infra.ports || []).length), a: int((infra.airports || []).length) }) });
+  el.insertAdjacentHTML("beforeend", tiles(head) + (trade ? `<p class="adv-callout">${t("Viajes de <b>personas</b> en un solo día, el <b>{day}</b>: no son mercancías ni una media del año. {a} empiezan y acaban en Galicia, {b} salen de ella y {c} llegan de fuera.", { day: esc(dayText), a: int(nt.internal), b: int(nt.outbound), c: int(nt.inbound) })} ${attribution}.</p>` : ""));
 
   // --- routes between comarcas -----------------------------------------------------------------------------------
   if (trade) trips = tradeSections();
@@ -42,13 +43,13 @@ export async function mount(ctx) {
 
   el.insertAdjacentHTML("beforeend", sourcesHtml(data, [...(trade?.sources || []), ...(infra?.sources || [])], [
     ...(trade ? [
-      `Los viajes son de un solo día laborable, el ${esc(dayText)}. MITMA los estima con teléfonos móviles: viajes de más de 500 m de los residentes en España. No dicen qué se transporta ni en qué medio.`,
-      "El motivo se deduce de la actividad en el destino del viaje.",
+      t("Los viajes son de un solo día laborable, el {day}. MITMA los estima con teléfonos móviles: viajes de más de 500 m de los residentes en España. No dicen qué se transporta ni en qué medio.", { day: esc(dayText) }),
+      t("El motivo se deduce de la actividad en el destino del viaje."),
       `${esc(trade.path_note || "")} ${attribution}.`,
     ] : []),
     ...(infra ? [
-      "Los puertos son los de interés general; los autonómicos no están. Su posición viene de Wikidata (CC0) y la de los aeropuertos de OpenStreetMap (ODbL). No se muestran cifras de tráfico: Puertos del Estado y Aena exigen autorización previa.",
-      "Las carreteras y las vías del mapa son dibujo, no estadística.",
+      t("Los puertos son los de interés general; los autonómicos no están. Su posición viene de Wikidata (CC0) y la de los aeropuertos de OpenStreetMap (ODbL). No se muestran cifras de tráfico: Puertos del Estado y Aena exigen autorización previa."),
+      t("Las carreteras y las vías del mapa son dibujo, no estadística."),
     ] : []),
   ]));
 
@@ -98,15 +99,15 @@ export async function mount(ctx) {
     const redraw = () => app.requestDraw();
 
     // Routes.
-    const rBody = section(el, { title: "Rutas entre comarcas", kicker: esc(trade.vintage || ""), note: esc(trade.rule || "") });
+    const rBody = section(el, { title: t("Rutas entre comarcas"), kicker: esc(trade.vintage || ""), note: esc(trade.rule || "") });
     const totals = new Map(purposes.map((p) => [p.id, routes.reduce((a, r) => a + valueOf(r, p.id), 0)]));
-    rBody.insertAdjacentHTML("beforeend", `<h4 class="adv-h4">Motivo de los viajes en las ${int(routes.length)} rutas</h4>`);
+    rBody.insertAdjacentHTML("beforeend", `<h4 class="adv-h4">${t("Motivo de los viajes en las {n} rutas", { n: int(routes.length) })}</h4>`);
     const purposeBar = shareBar(rBody, {
-      parts: purposes.map((p) => ({ key: p.id, label: p.name, value: totals.get(p.id), color: PURPOSE_COLOR[p.id] || "#999", text: `${count3(totals.get(p.id))} viajes` })),
+      parts: purposes.map((p) => ({ key: p.id, label: p.name, value: totals.get(p.id), color: PURPOSE_COLOR[p.id] || "#999", text: t("{n} viajes", { n: count3(totals.get(p.id)) }) })),
       onHover: (p) => { purposeHot = p ? p.key : null; redraw(); },
       onClick: (p) => setPurpose(st.purpose === p.key ? null : p.key),
     });
-    rBody.insertAdjacentHTML("beforeend", `<p class="adv-note">Pulsa un motivo para ordenar las rutas por esos viajes.</p>`);
+    rBody.insertAdjacentHTML("beforeend", `<p class="adv-note">${t("Pulsa un motivo para ordenar las rutas por esos viajes.")}</p>`);
     const fRow = mk("div", "adv-row adv-filterbar");
     rBody.appendChild(fRow);
     fRow.addEventListener("click", (e) => {
@@ -116,7 +117,7 @@ export async function mount(ctx) {
     const rHost = mk("div");
     const rDetail = mk("div", "adv-detail");
     rBody.append(rHost, rDetail);
-    rBody.insertAdjacentHTML("beforeend", `<p class="adv-note">${esc(trade.path_note || "")} El grosor sigue los viajes. ${attribution}, ${esc(dayText)}.</p>`);
+    rBody.insertAdjacentHTML("beforeend", `<p class="adv-note">${esc(trade.path_note || "")} ${t("El grosor sigue los viajes.")} ${attribution}, ${esc(dayText)}.</p>`);
 
     function drawRoutes() {
       const vis = visibleRoutes();
@@ -125,13 +126,13 @@ export async function mount(ctx) {
       routeBars = null;
       if (vis.length) {
         routeBars = barList(rHost, {
-          rank: !st.zone, ariaLabel: "Rutas entre comarcas con más viajes",
+          rank: !st.zone, ariaLabel: t("Rutas entre comarcas con más viajes"),
           max: Math.max(1, ...routes.map((r) => valueOf(r))),
           rows: vis.map((r) => ({
             key: r.key, label: r.label, value: valueOf(r), text: count3(Math.round(valueOf(r))),
             color: st.purpose ? PURPOSE_COLOR[st.purpose] : ROUTE_COLOR,
-            sub: st.purpose ? `${pct(r.purposes?.[st.purpose], 0)} de ${count3(r.trips)}` : `${dec(r.km)} km`,
-            full: `${r.label} (n.º ${r.rank} por viajes totales, ${dec(r.km)} km por viaje de media)`,
+            sub: st.purpose ? t("{share} de {total}", { share: pct(r.purposes?.[st.purpose], 0), total: count3(r.trips) }) : `${dec(r.km)} km`,
+            full: t("{label} (n.º {rank} por viajes totales, {km} km por viaje de media)", { label: r.label, rank: r.rank, km: dec(r.km) }),
           })),
           selected: st.route?.key,
           onHover: (row) => {
@@ -142,10 +143,10 @@ export async function mount(ctx) {
           onClick: (row) => selectRoute(routes.find((x) => x.key === row.key)),
         });
       } else {
-        rHost.innerHTML = `<p class="adv-empty">Ninguna de las ${int(routes.length)} rutas con más viajes toca esta comarca. Abajo están sus socios principales.</p>`;
+        rHost.innerHTML = `<p class="adv-empty">${t("Ninguna de las {n} rutas con más viajes toca esta comarca. Abajo están sus socios principales.", { n: int(routes.length) })}</p>`;
       }
-      fRow.innerHTML = (st.purpose ? `<span class="adv-fchip">Motivo: <b>${esc(purposeName.get(st.purpose))}</b><button type="button" data-clear-purpose aria-label="Quitar el filtro de motivo">✕</button></span>` : "")
-        + (st.zone ? `<span class="adv-fchip">Comarca: <b>${esc(zName(st.zone))}</b> · ${int(vis.length)} ${vis.length === 1 ? "ruta" : "rutas"}<button type="button" data-clear-zone aria-label="Quitar el filtro de comarca">✕</button></span>` : "");
+      fRow.innerHTML = (st.purpose ? `<span class="adv-fchip">${t("Motivo: <b>{name}</b>", { name: esc(purposeName.get(st.purpose)) })}<button type="button" data-clear-purpose aria-label="${esc(t("Quitar el filtro de motivo"))}">✕</button></span>` : "")
+        + (st.zone ? `<span class="adv-fchip">${vis.length === 1 ? t("Comarca: <b>{name}</b> · {n} ruta", { name: esc(zName(st.zone)), n: int(vis.length) }) : t("Comarca: <b>{name}</b> · {n} rutas", { name: esc(zName(st.zone)), n: int(vis.length) })}<button type="button" data-clear-zone aria-label="${esc(t("Quitar el filtro de comarca"))}">✕</button></span>` : "");
       purposeBar.setSelected(st.purpose);
       redraw();
     }
@@ -178,34 +179,34 @@ export async function mount(ctx) {
       rDetail.innerHTML = `<div class="adv-card-detail">
         <h4 class="adv-h4">${esc(r.label)}</h4>
         ${tiles([
-          { label: "Viajes", value: int(r.trips), sub: "los dos sentidos" },
-          { label: "Por viaje", value: `${dec(r.km)} km`, sub: "media, en línea recta" },
-          { label: "Entre cabeceras", value: `${int(r.dist_km)} km`, sub: "en línea recta" },
+          { label: t("Viajes"), value: int(r.trips), sub: t("los dos sentidos") },
+          { label: t("Por viaje"), value: `${dec(r.km)} km`, sub: t("media, en línea recta") },
+          { label: t("Entre cabeceras"), value: `${int(r.dist_km)} km`, sub: t("en línea recta") },
         ])}
         <p class="adv-note"><b>${esc(a)} → ${esc(b)}:</b> ${int(r.trips_ab)} · <b>${esc(b)} → ${esc(a)}:</b> ${int(r.trips_ba)}</p>
-        <p class="adv-note"><b>Motivo:</b> ${purposes.map((p) => `${esc(p.name)} ${pct(r.purposes?.[p.id])}`).join(" · ")}</p>
-        <p class="adv-note">Un solo día, el ${esc(dayText)}. ${attribution}.</p>
-        <button type="button" class="adv-mini" data-unpin>Cerrar</button></div>`;
+        <p class="adv-note"><b>${t("Motivo:")}</b> ${purposes.map((p) => `${esc(p.name)} ${pct(r.purposes?.[p.id])}`).join(" · ")}</p>
+        <p class="adv-note">${t("Un solo día, el {day}.", { day: esc(dayText) })} ${attribution}.</p>
+        <button type="button" class="adv-mini" data-unpin>${t("Cerrar")}</button></div>`;
       rDetail.querySelector("[data-unpin]").addEventListener("click", () => selectRoute(st.route));
     }
 
     // Comarcas and their partners.
     const zBody = section(el, {
-      title: "Comarcas y sus socios",
-      note: `Viajes del ${esc(dayText)} dentro de cada comarca, con otras comarcas y con fuera de Galicia. Pasa el puntero para verla en el mapa y pulsa para ver sus rutas y socios.`,
+      title: t("Comarcas y sus socios"),
+      note: t("Viajes del {day} dentro de cada comarca, con otras comarcas y con fuera de Galicia. Pasa el puntero para verla en el mapa y pulsa para ver sus rutas y socios.", { day: esc(dayText) }),
     });
     const outside = (z) => (z.totals_trips ? (z.totals_trips.inbound || 0) + (z.totals_trips.outbound || 0) : null);
     const zones = (trade.zones || []).map((z) => ({ ...z, key: z.id }));
     const num = (key, label, short, value, extra = {}) => ({ key, label, short, value, text: (z) => count3(value(z)), ...extra });
     const zTable = createTable(zBody, {
-      caption: "Viajes por comarca", rank: true, maxHeight: 260, search: "Buscar comarca",
+      caption: t("Viajes por comarca"), rank: true, maxHeight: 260, search: t("Buscar comarca"),
       searchText: (z) => z.name,
       columns: [
-        { key: "name", label: "Comarca", align: "l", width: "minmax(0,1.7fr)", value: (z) => z.name, text: (z) => z.name },
-        num("within", "Viajes dentro de la comarca", "Dentro", (z) => z.totals_trips?.within),
-        num("other", "Viajes desde o hacia otras comarcas", "Otras", (z) => z.totals_trips?.other_zones,
+        { key: "name", label: t("Comarca"), align: "l", width: "minmax(0,1.7fr)", value: (z) => z.name, text: (z) => z.name },
+        num("within", t("Viajes dentro de la comarca"), t("Dentro"), (z) => z.totals_trips?.within),
+        num("other", t("Viajes desde o hacia otras comarcas"), t("Otras"), (z) => z.totals_trips?.other_zones,
           { bar: { max: Math.max(1, ...zones.map((z) => z.totals_trips?.other_zones || 0)), color: "rgba(47,164,184,.3)" } }),
-        num("outside", "Viajes desde o hacia fuera de Galicia", "Fuera", outside, { hideBelow: 360 }),
+        num("outside", t("Viajes desde o hacia fuera de Galicia"), t("Fuera"), outside, { hideBelow: 360 }),
       ],
       rows: zones, sort: { key: "other", dir: "desc" },
       onHover: (z) => link.hover(z ? zoneHighlight(z) : null),
@@ -229,19 +230,19 @@ export async function mount(ctx) {
       const names = (z.cities || []).map((id) => metros.byKey.get(id)?.name).filter(Boolean);
       const other = z.totals_trips?.other_zones;
       zDetail.innerHTML = `<div class="adv-card-detail"><h4 class="adv-h4">${esc(z.name)}</h4>
-        <p class="adv-note">${int(z.counties)} ${z.counties === 1 ? "concello" : "concellos"} · ${names.length ? `${names.length === 1 ? "ciudad" : "ciudades"}: ${names.map(esc).join(", ")}` : "sin ciudades de 10 000 habitantes o más"}</p>
+        <p class="adv-note">${z.counties === 1 ? t("{n} concello", { n: int(z.counties) }) : t("{n} concellos", { n: int(z.counties) })} · ${names.length ? (names.length === 1 ? t("ciudad: {lista}", { lista: names.map(esc).join(", ") }) : t("ciudades: {lista}", { lista: names.map(esc).join(", ") })) : t("sin ciudades de 10 000 habitantes o más")}</p>
         ${tiles([
-          { label: "Dentro", value: count3(z.totals_trips?.within), sub: "en la comarca" },
-          { label: "Otras comarcas", value: count3(other), sub: "ida y vuelta" },
-          { label: "Fuera de Galicia", value: count3(outside(z)), sub: "ida y vuelta" },
+          { label: t("Dentro"), value: count3(z.totals_trips?.within), sub: t("en la comarca") },
+          { label: t("Otras comarcas"), value: count3(other), sub: t("ida y vuelta") },
+          { label: t("Fuera de Galicia"), value: count3(outside(z)), sub: t("ida y vuelta") },
         ])}
-        <h4 class="adv-h4">Socios principales (viajes en los dos sentidos)</h4><div class="adv-zp"></div>
-        <div class="adv-row">${frameBtn()}<button type="button" class="adv-mini" data-unzone>Cerrar</button></div></div>`;
+        <h4 class="adv-h4">${t("Socios principales (viajes en los dos sentidos)")}</h4><div class="adv-zp"></div>
+        <div class="adv-row">${frameBtn()}<button type="button" class="adv-mini" data-unzone>${t("Cerrar")}</button></div></div>`;
       barList(zDetail.querySelector(".adv-zp"), {
-        compact: true, ariaLabel: "Comarcas socias principales",
+        compact: true, ariaLabel: t("Comarcas socias principales"),
         rows: (z.partners || []).map(([id, v]) => ({
           key: id, label: zName(id), value: v, text: count3(v), color: ROUTE_COLOR,
-          sub: other > 0 ? `${pct(v / other, 0)} de «otras»` : "",
+          sub: other > 0 ? t("{share} de «otras»", { share: pct(v / other, 0) }) : "",
         })),
         onHover: (row) => { const pz = row ? zoneById.get(row.key) : null; link.hover(pz ? zoneHighlight(pz) : null); },
         onClick: (row) => { if (zoneById.has(row.key)) { link.hover(null); setZone(row.key); } },
@@ -361,19 +362,19 @@ export async function mount(ctx) {
       }
       body.appendChild(ul);
     };
-    siteList("Puertos", v.ports, infra.rules?.ports, infra.ports || [], (p) => p.name,
+    siteList(t("Puertos"), v.ports, infra.rules?.ports, infra.ports || [], (p) => p.name,
       (p) => ({ cells: new Set(p.cell != null ? [p.cell] : []), label: p.name }));
-    siteList("Aeropuertos", v.airports, infra.rules?.airports, infra.airports || [], (a) => `${a.id} ${a.city || a.name}`,
+    siteList(t("Aeropuertos"), v.airports, infra.rules?.airports, infra.airports || [], (a) => `${a.id} ${a.city || a.name}`,
       (a) => ({ cells: new Set(a.cell != null ? [a.cell] : []), label: `${a.id} · ${a.city || a.name}` }));
 
     // Roads and rail: the counts and rules (the map layers draw them; switches live in the Map menu).
-    const nBody = section(el, { title: "Carreteras y ferrocarril", open: false });
+    const nBody = section(el, { title: t("Carreteras y ferrocarril"), open: false });
     const counts = (links) => links.reduce((a, r) => { a[r[2]] = (a[r[2]] || 0) + 1; return a; }, []);
     const nRoad = counts(infra.roads || []), nRail = counts(infra.rail || []);
-    const line = (classes, n) => (classes || []).map((c, i) => `<b>${esc(c.name)}</b>: ${int(n[i] || 0)} enlaces entre casillas`).join(" · ");
+    const line = (classes, n) => (classes || []).map((c, i) => t("<b>{name}</b>: {n} enlaces entre casillas", { name: esc(c.name), n: int(n[i] || 0) })).join(" · ");
     nBody.innerHTML = `<p class="adv-note">${line(infra.road_classes, nRoad)}</p><p class="adv-note">${line(infra.rail_tiers, nRail)}</p>
       <p class="adv-note">${esc(v.roads || "")}. ${esc(infra.rules?.roads || "")}</p><p class="adv-note">${esc(infra.rules?.rail || "")}</p>
-      <p class="adv-note">Las carreteras, el ferrocarril, los puertos y los aeropuertos se activan o se quitan en el menú <b>Mapa</b>.</p>`;
+      <p class="adv-note">${t("Las carreteras, el ferrocarril, los puertos y los aeropuertos se activan o se quitan en el menú <b>Mapa</b>.")}</p>`;
   }
 }
 
@@ -381,6 +382,6 @@ export async function mount(ctx) {
 function segDist(px, py, ax, ay, bx, by) {
   const dx = bx - ax, dy = by - ay;
   const l2 = dx * dx + dy * dy;
-  const t = l2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l2)) : 0;
-  return Math.hypot(px - ax - t * dx, py - ay - t * dy);
+  const u = l2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l2)) : 0;
+  return Math.hypot(px - ax - u * dx, py - ay - u * dy);
 }

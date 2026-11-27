@@ -2,6 +2,7 @@
 // Each is an ordinary lens object ({id, name, ramp, domain, scale, format, values: per cell}) that app.setLens()
 // accepts; they are built once per data model and cached, so the lens dock's histogram cache stays valid.
 import { fin, quantile, ratio, RAMPS } from "./util.js";
+import { t } from "../../../i18n.js";
 import { fpPlacesLens } from "./fp.js";
 import { caminoLens } from "./camino.js"; // camino.js imports countyLens from here: a cycle, safe because both only call at run time
 
@@ -30,10 +31,10 @@ export function scienceLens(data) {
     const share = (c) => (fin(c.yields?.science) && c.employed > 0 ? c.yields.science / c.employed : null);
     for (const [cell, city] of cellMetro) if (owner[cell] >= 0) values[cell] = share(city);
     return {
-      id: "adv-science-share", group: "work", name: "Peso de la rama de ciencia",
-      icon: "l-degrees", emoji: "🔬", unit: "de las personas afiliadas", format: "pct", scale: "linear",
+      id: "adv-science-share", group: "work", name: t("Peso de la rama de ciencia"),
+      icon: "l-degrees", emoji: "🔬", unit: t("de las personas afiliadas"), format: "pct", scale: "linear",
       domain: robust(data.levels.metros.rows.map((r) => share(r.ref))), ramp: SCIENCE_RAMP, higher_is: "neutral", source: "ige_ramas",
-      description: "Estimación de las personas afiliadas en la rama de información, actividades financieras, inmobiliarias y profesionales, entre todas las afiliadas que viven en la ciudad (IGE). Las casillas en gris quedan fuera de las ciudades.",
+      description: t("Estimación de las personas afiliadas en la rama de información, actividades financieras, inmobiliarias y profesionales, entre todas las afiliadas que viven en la ciudad (IGE). Las casillas en gris quedan fuera de las ciudades."),
       values,
     };
   });
@@ -87,8 +88,8 @@ export function growthLens(data) {
   const vals = data.levels.counties.rows.map((r) => r.v.growth).filter(fin).map(Math.abs).sort((a, b) => a - b);
   const m = vals.length ? Math.max(vals[Math.floor(vals.length * 0.98)] || 0.01, 0.01) : 0.1;
   return countyLens(data, "growth", {
-    name: "Variación de la población", ramp: RAMPS.div, format: "pct", domain: [-m, m], emoji: "📉",
-    unit: "variación 2021-2025", icon: "pop",
+    name: t("Variación de la población"), ramp: RAMPS.div, format: "pct", domain: [-m, m], emoji: "📉",
+    unit: t("variación 2021-2025"), icon: "pop",
   });
 }
 
@@ -99,8 +100,8 @@ export const cultureShare = (r) => ratio(r.v.y_culture, r.v.affiliates);
 /** Culture-branch affiliates as a share of all affiliates, per comarca. */
 export function cultureLens(data) {
   return stateLens(data, "culture-branch", (_, r) => cultureShare(r), {
-    group: "work", name: "Peso de la rama Cultura", unit: "de las personas afiliadas", format: "pct", source: "ige_ramas", ramp: CULTURE_RAMP,
-    description: `Estimación de las personas afiliadas en la rama «${CULTURE_BRANCH}» entre todas las afiliadas que viven en la comarca (IGE). No son trabajadores de la cultura.`,
+    group: "work", name: t("Peso de la rama Cultura"), unit: t("de las personas afiliadas"), format: "pct", source: "ige_ramas", ramp: CULTURE_RAMP,
+    description: t("Estimación de las personas afiliadas en la rama «{branch}» entre todas las afiliadas que viven en la comarca (IGE). No son trabajadores de la cultura.", { branch: CULTURE_BRANCH }),
   });
 }
 
@@ -117,10 +118,10 @@ export function fireYearLens(data, fires, year) {
     for (let i = 0; i < n; i++) if (owner[i] >= 0) values[i] = 0;
     for (const [cell, share] of fires.cells[k]) if (owner[cell] >= 0) values[cell] = share;
     return {
-      id: `adv-fire-${year}`, group: "risks", name: `Quemado en ${year}`, icon: "l-fire", emoji: "🔥",
-      unit: `parte de la casilla quemada en ${year}`, format: "pct", scale: "linear", domain: [0, 1], ramp: FIRE_RAMP,
+      id: `adv-fire-${year}`, group: "risks", name: t("Quemado en {year}", { year }), icon: "l-fire", emoji: "🔥",
+      unit: t("parte de la casilla quemada en {year}", { year }), format: "pct", scale: "linear", domain: [0, 1], ramp: FIRE_RAMP,
       higher_is: "bad", source: "effis",
-      description: `Parte de la superficie de la casilla dentro de un perímetro quemado en ${year} (EFFIS, Copernicus). EFFIS detecta con fiabilidad los incendios desde unas 30 ha: los pequeños no salen. Las casillas de tierra sin incendio valen 0.`,
+      description: t("Parte de la superficie de la casilla dentro de un perímetro quemado en {year} (EFFIS, Copernicus). EFFIS detecta con fiabilidad los incendios desde unas 30 ha: los pequeños no salen. Las casillas de tierra sin incendio valen 0.", { year }),
       values,
     };
   });

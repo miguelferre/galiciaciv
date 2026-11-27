@@ -6,10 +6,11 @@ import { createScatter } from "../core/scatter.js";
 import { section, tiles, segmented, mapPicker, frameBtn, sourcesHtml, topBy } from "../core/view.js";
 import { rowsHighlight, extendData } from "../core/data.js";
 import { growthLens } from "../core/lenses.js";
+import { t } from "../../../i18n.js";
 
 const AGE_COLOR = { child: "#f6dc8a", young: "#7fbf8e", midlife: "#4f8fa8", elder: "#a8639e" };
 const BIRTH_COLOR = { same_concello: "#c9a45c", galicia: "#8fb86a", spain: "#5a9ad0", abroad: "#d8675c" };
-const years = (v) => (fin(v) ? `${dec(v, 1)} años` : "–");
+const years = (v) => (fin(v) ? t("{n} años", { n: dec(v, 1) }) : "–");
 
 const perKm2 = (v) => (fin(v) ? `${v >= 100 ? int(v) : dec(v, 1)} hab./km²` : "–");
 
@@ -25,9 +26,9 @@ export async function mount(ctx) {
   const cityPop = popOf(metros.rows);
   const outside = nat ? nat.nativity.shares.spain + nat.nativity.shares.abroad : gal.nacidos_fuera;
   el.insertAdjacentHTML("beforeend", tiles([
-    { label: "Habitantes", value: count3(gal.population), sub: perKm2(gal.density) },
-    { label: "Edad media", value: years(meanAge), sub: cz ? `Padrón ${cz.year}` : "media de los concellos" },
-    { label: "Nacidos fuera", value: pct(outside), sub: "fuera de Galicia" },
+    { label: t("Habitantes"), value: count3(gal.population), sub: perKm2(gal.density) },
+    { label: t("Edad media"), value: years(meanAge), sub: cz ? t("Padrón {year}", { year: cz.year }) : t("media de los concellos") },
+    { label: t("Nacidos fuera"), value: pct(outside), sub: t("fuera de Galicia") },
   ]));
 
   // --- the map: density by default, so the map tells the same story as the first chart --------------------------
@@ -38,20 +39,20 @@ export async function mount(ctx) {
   const picker = mapPicker(ctx, mapRow, {
     value: "density",
     options: [
-      lensOpt("density", "Densidad"), lensOpt("edad_media", "Edad media"), lensOpt("nacidos_fuera", "Nacidos fuera"),
-      ...(counties?.field("growth") ? [{ value: "growth", label: "Variación", lens: () => growthLens(data) }] : []),
-      { value: "terrain", label: "Terreno", lens: () => null },
+      lensOpt("density", t("Densidad")), lensOpt("edad_media", t("Edad media")), lensOpt("nacidos_fuera", t("Nacidos fuera")),
+      ...(counties?.field("growth") ? [{ value: "growth", label: t("Variación"), lens: () => growthLens(data) }] : []),
+      { value: "terrain", label: t("Terreno"), lens: () => null },
     ],
   });
 
   // --- where people live ----------------------------------------------------------------------------------------
-  const wBody = section(el, { title: "Dónde vive la gente", note: `Las ${int(metros.rows.length)} ciudades (concellos de 10 000 habitantes o más) reúnen el ${pct(cityPop / gal.population)} de la población de Galicia. Pasa el puntero por una barra para verla en el mapa; pulsa para ir.` });
+  const wBody = section(el, { title: t("Dónde vive la gente"), note: t("Las {n} ciudades (concellos de 10 000 habitantes o más) reúnen el {p} de la población de Galicia. Pasa el puntero por una barra para verla en el mapa; pulsa para ir.", { n: int(metros.rows.length), p: pct(cityPop / gal.population) }) });
   const wCtl = document.createElement("div");
   wCtl.className = "adv-row";
   wBody.appendChild(wCtl);
   let wLevel = counties ? "counties" : "states", wKey = "population";
-  if (counties) segmented(wCtl, { label: "Territorio", value: wLevel, options: [{ value: "counties", label: "Concellos" }, { value: "states", label: "Comarcas" }], onChange: (v) => { wLevel = v; drawWhere(); } });
-  segmented(wCtl, { label: "Orden", value: wKey, options: [{ value: "population", label: "Habitantes" }, { value: "density", label: "Densidad" }], onChange: (v) => { wKey = v; drawWhere(); } });
+  if (counties) segmented(wCtl, { label: t("Territorio"), value: wLevel, options: [{ value: "counties", label: t("Concellos") }, { value: "states", label: t("Comarcas") }], onChange: (v) => { wLevel = v; drawWhere(); } });
+  segmented(wCtl, { label: t("Orden"), value: wKey, options: [{ value: "population", label: t("Habitantes") }, { value: "density", label: t("Densidad") }], onChange: (v) => { wKey = v; drawWhere(); } });
   const wHost = document.createElement("div");
   wBody.appendChild(wHost);
   let wBars = null;
@@ -65,7 +66,7 @@ export async function mount(ctx) {
       text: byPop ? count3(x.v) : perKm2(x.v),
     }));
     wBars = barList(wHost, {
-      rows, rank: true, ariaLabel: byPop ? "Territorios con más habitantes" : "Territorios con más densidad",
+      rows, rank: true, ariaLabel: byPop ? t("Territorios con más habitantes") : t("Territorios con más densidad"),
       onHover: (r) => link.hover(r ? rowsHighlight(lv, [r.row]) : null),
       onClick: (r) => lv.focus(r.row),
     });
@@ -75,16 +76,16 @@ export async function mount(ctx) {
   // --- density --------------------------------------------------------------------------------------------------
   let hist = null, drawHist = null, pinnedBin = null, binInfo = null;
   if (counties) {
-    const dBody = section(el, { title: "Densidad", note: "Concellos según sus habitantes por km² (escala logarítmica). Elige <i>habitantes</i> para que cada concello pese según su población. Pasa el puntero por una barra para ver esos concellos; pulsa para dejarlos marcados." });
+    const dBody = section(el, { title: t("Densidad"), note: t("Concellos según sus habitantes por km² (escala logarítmica). Elige <i>habitantes</i> para que cada concello pese según su población. Pasa el puntero por una barra para ver esos concellos; pulsa para dejarlos marcados.") });
     const dCtl = document.createElement("div");
     dCtl.className = "adv-row";
     dBody.appendChild(dCtl);
     let weighted = false;
-    segmented(dCtl, { label: "Contar", value: "counties", options: [{ value: "counties", label: "Concellos" }, { value: "people", label: "Habitantes" }], onChange: (v) => { weighted = v === "people"; drawHist(); } });
+    segmented(dCtl, { label: t("Contar"), value: "counties", options: [{ value: "counties", label: t("Concellos") }, { value: "people", label: t("Habitantes") }], onChange: (v) => { weighted = v === "people"; drawHist(); } });
     const dLens = document.createElement("button");
     dLens.type = "button";
     dLens.className = "adv-mini";
-    dLens.textContent = "Colorear el mapa por densidad";
+    dLens.textContent = t("Colorear el mapa por densidad");
     dLens.addEventListener("click", () => picker.set("density"));
     dCtl.appendChild(dLens);
     const histHost = document.createElement("div");
@@ -100,16 +101,16 @@ export async function mount(ctx) {
       const dom = [2, 7000];
       hist = histogram(histHost, {
         values: vals, log: true, bins: 30, domain: dom, weighted, height: 130,
-        fmt: (v) => fmtShort("float", v), unitLabel: "concellos", weightFmt: (w) => `${count3(w)} habitantes`,
-        label: "Histograma de la densidad de población de los concellos",
-        colorOf: (_, t) => colorScale({ type: "seq", domain: [0, 1], ramp: densRamp })(t),
-        markers: [{ v: gal.density, label: "Media de Galicia" }],
+        fmt: (v) => fmtShort("float", v), unitLabel: t("concellos"), weightFmt: (w) => t("{n} habitantes", { n: count3(w) }),
+        label: t("Histograma de la densidad de población de los concellos"),
+        colorOf: (_, tk) => colorScale({ type: "seq", domain: [0, 1], ramp: densRamp })(tk),
+        markers: [{ v: gal.density, label: t("Media de Galicia") }],
         onHover: (bin) => link.hover(bin ? rowsHighlight(counties, bin.keys.map((k) => cByKey.get(k)), { dim: true }) : null),
         onClick: (bin) => {
           pinnedBin = pinnedBin === bin.i ? null : bin.i;
           const rows = pinnedBin != null ? bin.keys.map((k) => cByKey.get(k)) : [];
           link.base(rows.length ? rowsHighlight(counties, rows, { dim: true }) : null, { frame: rows.length > 1 });
-          binInfo.innerHTML = rows.length ? `<b>${int(rows.length)}</b> ${rows.length === 1 ? "concello" : "concellos"} de ${fmtShort("float", bin.x0)} a ${fmtShort("float", bin.x1)} hab./km² · ${count3(popOf(rows))} habitantes ${frameBtn()}<button type="button" class="adv-mini" data-clear>Quitar</button>` : "";
+          binInfo.innerHTML = rows.length ? `${t("<b>{n}</b> {noun} de {a} a {b} hab./km² · {pop} habitantes", { n: int(rows.length), noun: rows.length === 1 ? t("concello") : t("concellos"), a: fmtShort("float", bin.x0), b: fmtShort("float", bin.x1), pop: count3(popOf(rows)) })} ${frameBtn()}<button type="button" class="adv-mini" data-clear>${t("Quitar")}</button>` : "";
         },
       });
     };
@@ -123,18 +124,18 @@ export async function mount(ctx) {
   function cityBlock({ row, title, note, colors, sorts }) {
     const body = section(el, { title, note });
     const groups = cz.groups[row];
-    body.insertAdjacentHTML("beforeend", `<h4 class="adv-h4">Toda Galicia</h4>`);
+    body.insertAdjacentHTML("beforeend", `<h4 class="adv-h4">${t("Toda Galicia")}</h4>`);
     shareBar(body, {
-      parts: groups.map((g) => ({ key: g.key, label: g.label, value: nat[row].counts[g.key], text: `${int(nat[row].counts[g.key])} habitantes`, color: colors[g.key] })),
+      parts: groups.map((g) => ({ key: g.key, label: g.label, value: nat[row].counts[g.key], text: t("{n} habitantes", { n: int(nat[row].counts[g.key]) }), color: colors[g.key] })),
       onClick: (p) => {
         seg.set("__none");
-        draw({ of: (c) => c[row].shares[p.key], fmt: (v) => pct(v), caption: `Dónde pesa más: ${p.label.toLowerCase()}` });
+        draw({ of: (c) => c[row].shares[p.key], fmt: (v) => pct(v), caption: t("Dónde pesa más: {grupo}", { grupo: p.label.toLowerCase() }) });
       },
     });
     const ctl = document.createElement("div");
     ctl.className = "adv-row";
     body.appendChild(ctl);
-    const seg = segmented(ctl, { label: "Orden de las ciudades", value: sorts[0].value, options: sorts, onChange: (v) => draw(sorts.find((s) => s.value === v)) });
+    const seg = segmented(ctl, { label: t("Orden de las ciudades"), value: sorts[0].value, options: sorts, onChange: (v) => draw(sorts.find((s) => s.value === v)) });
     const host = document.createElement("div");
     body.appendChild(host);
     const slot = cityBars.push(null) - 1;
@@ -153,19 +154,19 @@ export async function mount(ctx) {
   }
   if (cz) {
     cityBlock({
-      row: "age", title: "Qué edad tiene", colors: AGE_COLOR,
-      note: "Reparto por edad en cuatro tramos; cada barra de la lista es una ciudad. Pulsa un tramo de la leyenda para ver en qué ciudades pesa más.",
+      row: "age", title: t("Qué edad tiene"), colors: AGE_COLOR,
+      note: t("Reparto por edad en cuatro tramos; cada barra de la lista es una ciudad. Pulsa un tramo de la leyenda para ver en qué ciudades pesa más."),
       sorts: [
-        { value: "old", label: "Más mayores", of: (c) => c.age.mean, fmt: years, caption: "Ciudades con la edad media más alta" },
-        { value: "young", label: "Más jóvenes", of: (c) => c.age.mean, asc: true, fmt: years, caption: "Ciudades con la edad media más baja" },
+        { value: "old", label: t("Más mayores"), of: (c) => c.age.mean, fmt: years, caption: t("Ciudades con la edad media más alta") },
+        { value: "young", label: t("Más jóvenes"), of: (c) => c.age.mean, asc: true, fmt: years, caption: t("Ciudades con la edad media más baja") },
       ],
     });
     cityBlock({
-      row: "nativity", title: "Dónde nació", colors: BIRTH_COLOR,
-      note: `Habitantes por lugar de nacimiento. Nacer fuera no es lo mismo que tener otra nacionalidad: en Galicia tiene nacionalidad extranjera el ${pct(nat.foreign_nationals)}.`,
+      row: "nativity", title: t("Dónde nació"), colors: BIRTH_COLOR,
+      note: t("Habitantes por lugar de nacimiento. Nacer fuera no es lo mismo que tener otra nacionalidad: en Galicia tiene nacionalidad extranjera el {p}.", { p: pct(nat.foreign_nationals) }),
       sorts: [
-        { value: "outside", label: "Fuera de Galicia", of: (c) => c.nativity.shares.spain + c.nativity.shares.abroad, fmt: (v) => pct(v), caption: "Ciudades con más nacidos fuera de Galicia" },
-        { value: "abroad", label: "En el extranjero", of: (c) => c.nativity.shares.abroad, fmt: (v) => pct(v), caption: "Ciudades con más nacidos en el extranjero" },
+        { value: "outside", label: t("Fuera de Galicia"), of: (c) => c.nativity.shares.spain + c.nativity.shares.abroad, fmt: (v) => pct(v), caption: t("Ciudades con más nacidos fuera de Galicia") },
+        { value: "abroad", label: t("En el extranjero"), of: (c) => c.nativity.shares.abroad, fmt: (v) => pct(v), caption: t("Ciudades con más nacidos en el extranjero") },
       ],
     });
   }
@@ -173,11 +174,11 @@ export async function mount(ctx) {
   // --- age and born outside Galicia, concello by concello -------------------------------------------------------
   let scatter = null, selInfo = null;
   if (counties) {
-    const aBody = section(el, { title: "Edad y origen por concello", note: "Cada punto es un concello: edad media en horizontal, nacidos fuera de Galicia en vertical, tamaño según habitantes y color según densidad. Arrastra un rectángulo para seleccionar concellos y verlos en el mapa." });
+    const aBody = section(el, { title: t("Edad y origen por concello"), note: t("Cada punto es un concello: edad media en horizontal, nacidos fuera de Galicia en vertical, tamaño según habitantes y color según densidad. Arrastra un rectángulo para seleccionar concellos y verlos en el mapa.") });
     const aCtl = document.createElement("div");
     aCtl.className = "adv-row";
     aBody.appendChild(aCtl);
-    aCtl.innerHTML = `<span class="adv-note">Colorear el mapa por</span><button type="button" class="adv-mini" data-map="edad_media">edad media</button><button type="button" class="adv-mini" data-map="nacidos_fuera">nacidos fuera</button>`;
+    aCtl.innerHTML = `<span class="adv-note">${t("Colorear el mapa por")}</span><button type="button" class="adv-mini" data-map="edad_media">${t("edad media")}</button><button type="button" class="adv-mini" data-map="nacidos_fuera">${t("nacidos fuera")}</button>`;
     aCtl.addEventListener("click", (e) => { const v = e.target.closest("[data-map]")?.dataset.map; if (v) picker.set(v); });
     const dDom = robustDomain(counties.rows.map((r) => r.v.density), 0.02, true) || [3, 700];
     const dColor = colorScale({ type: "seq", domain: dDom, log: true, ramp: RAMPS.heat });
@@ -186,13 +187,13 @@ export async function mount(ctx) {
     scatter = createScatter(aBody, {
       height: 310,
       points: counties.rows.map((r) => ({ key: r.key, x: r.v.edad_media, y: r.v.nacidos_fuera, s: r.v.population, c: r.v.density, label: r.name, sub: r.sub, row: r })),
-      x: { label: "Edad media (años)", fmt: (v) => dec(v, Number.isInteger(v) ? 0 : 1) },
-      y: { label: "Nacidos fuera de Galicia", fmt: (v) => fmtShort("pct", v) },
-      size: { label: "Habitantes", fmt: count3, max: 14, min: 1.4 },
-      color: (c) => dColor(c), colorLabel: "Densidad", colorFmt: perKm2,
+      x: { label: t("Edad media (años)"), fmt: (v) => dec(v, Number.isInteger(v) ? 0 : 1) },
+      y: { label: t("Nacidos fuera de Galicia"), fmt: (v) => fmtShort("pct", v) },
+      size: { label: t("Habitantes"), fmt: count3, max: 14, min: 1.4 },
+      color: (c) => dColor(c), colorLabel: t("Densidad"), colorFmt: perKm2,
       labels: big,
-      refX: fin(mid) ? [{ v: mid, label: "mediana" }] : [],
-      ariaLabel: "Diagrama de dispersión de los concellos: nacidos fuera de Galicia frente a edad media",
+      refX: fin(mid) ? [{ v: mid, label: t("mediana") }] : [],
+      ariaLabel: t("Diagrama de dispersión de los concellos: nacidos fuera de Galicia frente a edad media"),
       onHover: (p) => link.hover(p ? rowsHighlight(counties, [p.row]) : null),
       onClick: (p) => counties.focus(p.row),
       onBrush: (set) => {
@@ -201,25 +202,25 @@ export async function mount(ctx) {
         selInfo.innerHTML = sel.length ? selSummary(sel) : "";
       },
     });
-    aBody.insertAdjacentHTML("beforeend", rampLegend({ ramp: RAMPS.heat, domain: dDom, log: true, fmt: (v) => fmtShort("float", v), label: "Habitantes por km²" }));
+    aBody.insertAdjacentHTML("beforeend", rampLegend({ ramp: RAMPS.heat, domain: dDom, log: true, fmt: (v) => fmtShort("float", v), label: t("Habitantes por km²") }));
     selInfo = document.createElement("div");
     selInfo.className = "adv-brushinfo";
     aBody.appendChild(selInfo);
     selInfo.addEventListener("click", (e) => { if (e.target.closest("[data-clear]")) { scatter.setSelected(null); link.base(null); selInfo.innerHTML = ""; } });
   } else {
-    el.insertAdjacentHTML("beforeend", `<p class="adv-empty pad">No se han podido cargar los datos de los concellos.</p>`);
+    el.insertAdjacentHTML("beforeend", `<p class="adv-empty pad">${t("No se han podido cargar los datos de los concellos.")}</p>`);
   }
   function selSummary(sel) {
     const pop = popOf(sel);
     const top = [...sel].sort((a, b) => (b.v.population || 0) - (a.v.population || 0)).slice(0, 5);
-    return `<b>${int(sel.length)}</b> ${sel.length === 1 ? "concello" : "concellos"} · ${count3(pop)} habitantes (${pct(pop / gal.population)} de Galicia)<br><span class="sub">Los más poblados: ${top.map((r) => esc(r.name)).join(" · ")}</span> ${frameBtn()}<button type="button" class="adv-mini" data-clear>Quitar</button>`;
+    return `${t("<b>{n}</b> {noun} · {pop} habitantes ({p} de Galicia)", { n: int(sel.length), noun: sel.length === 1 ? t("concello") : t("concellos"), pop: count3(pop), p: pct(pop / gal.population) })}<br><span class="sub">${t("Los más poblados: {lista}", { lista: top.map((r) => esc(r.name)).join(" · ") })}</span> ${frameBtn()}<button type="button" class="adv-mini" data-clear>${t("Quitar")}</button>`;
   }
 
   el.insertAdjacentHTML("beforeend", sourcesHtml(data, ["ine_padron", "ige_poboacion", "ige_comarcas", "ign_limites"], [
-    "La densidad es la población entre la superficie, calculada de un contorno simplificado de los concellos (escala 1:1M).",
-    "«Nacidos fuera de Galicia» suma a quienes nacieron en otra comunidad autónoma o en el extranjero.",
-    ...(nat ? [`Los habitantes salen del padrón del INE y los repartos por edad y lugar de nacimiento, de las tablas del IGE. Sus totales no coinciden exactamente (Galicia: ${int(gal.population)} y ${int(nat.age.total)}).`] : []),
-    ...(data.countiesOffMap ? [`${int(data.countiesOffMap)} concellos no ocupan ninguna casilla, así que al seleccionarlos no se marca nada en el mapa.`] : []),
+    t("La densidad es la población entre la superficie, calculada de un contorno simplificado de los concellos (escala 1:1M)."),
+    t("«Nacidos fuera de Galicia» suma a quienes nacieron en otra comunidad autónoma o en el extranjero."),
+    ...(nat ? [t("Los habitantes salen del padrón del INE y los repartos por edad y lugar de nacimiento, de las tablas del IGE. Sus totales no coinciden exactamente (Galicia: {a} y {b}).", { a: int(gal.population), b: int(nat.age.total) })] : []),
+    ...(data.countiesOffMap ? [t("{n} concellos no ocupan ninguna casilla, así que al seleccionarlos no se marca nada en el mapa.", { n: int(data.countiesOffMap) })] : []),
   ]));
 
   return {

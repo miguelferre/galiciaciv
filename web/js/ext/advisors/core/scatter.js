@@ -13,6 +13,7 @@
 //   onHover(point|null), onClick(point), onBrush(Set<key>|null)
 import { esc, fin, clamp, scale, ticks, logTicks, pad, extent, sizeCanvas, onWidth } from "./util.js";
 import { int } from "./fmt.js";
+import { t } from "../../../i18n.js";
 
 const M = { l: 52, r: 12, t: 10, b: 38 };
 
@@ -56,8 +57,8 @@ export function createScatter(host, opts) {
       r: o.size ? rmin + (rmax - rmin) * Math.sqrt(clamp((fin(p.s) ? p.s : 0) / smax, 0, 1)) : o.radius || 3,
     })).sort((a, b) => b.r - a.r);
     root._count = valid.length;
-    cv.setAttribute("aria-label", o.ariaLabel || `Diagrama de dispersión con ${int(valid.length)} puntos: ${o.y?.label || "y"} frente a ${o.x?.label || "x"}`);
-    hint.textContent = o.brush === false ? "" : `${int(valid.length)} puntos · arrastra para seleccionar`;
+    cv.setAttribute("aria-label", o.ariaLabel || t("Diagrama de dispersión con {n} puntos: {y} frente a {x}", { n: int(valid.length), y: o.y?.label || "y", x: o.x?.label || "x" }));
+    hint.textContent = o.brush === false ? "" : t("{n} puntos · arrastra para seleccionar", { n: int(valid.length) });
     draw();
   }
 
@@ -208,8 +209,8 @@ export function createScatter(host, opts) {
     for (const q of list) placed.push({ x0: q.px - q.r, y0: q.py - q.r, x1: q.px + q.r, y1: q.py + q.r, dot: q });
     const H2 = 6.5;
     for (const q of list) {
-      const t = q.p.label || String(q.p.key);
-      const tw = c.measureText(t).width;
+      const txt = q.p.label || String(q.p.key);
+      const tw = c.measureText(txt).width;
       const g = q.r + 3;
       const spots = [
         [q.px + g, q.py],
@@ -230,9 +231,9 @@ export function createScatter(host, opts) {
       c.lineWidth = 3;
       c.lineJoin = "round";
       c.strokeStyle = "rgba(10,14,20,.9)";
-      c.strokeText(t, at.x, at.y);
+      c.strokeText(txt, at.x, at.y);
       c.fillStyle = "#f3e7c8";
-      c.fillText(t, at.x, at.y);
+      c.fillText(txt, at.x, at.y);
     }
   }
 
@@ -262,7 +263,7 @@ export function createScatter(host, opts) {
       `${esc(o.x?.label || "x")}: <b>${esc((o.x?.fmt || String)(p.x))}</b>`,
       `${esc(o.y?.label || "y")}: <b>${esc((o.y?.fmt || String)(p.y))}</b>`,
     ];
-    if (o.size && fin(p.s)) rows.push(`${esc(o.size.label || "tamaño")}: <b>${esc((o.size.fmt || String)(p.s))}</b>`);
+    if (o.size && fin(p.s)) rows.push(`${esc(o.size.label || t("tamaño"))}: <b>${esc((o.size.fmt || String)(p.s))}</b>`);
     if (o.colorLabel && p.c != null && !o.colorIsSame) rows.push(`${esc(o.colorLabel)}: <b>${esc((o.colorFmt || String)(p.c))}</b>`);
     if (p.extra) rows.push(esc(p.extra));
     tip.innerHTML = rows.join("<br>");

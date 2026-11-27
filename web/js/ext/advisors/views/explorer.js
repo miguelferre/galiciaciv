@@ -1,5 +1,6 @@
 // Explorer: the generic slice-and-dice. Pick a level, any columns, filter, sort, plot any X / Y / size / colour,
 // brush points onto the map, and show a column as a map lens where one exists.
+import { t } from "../../../i18n.js";
 import { esc, fin, colorScale, robustDomain, extent, RAMPS } from "../core/util.js";
 import { fmtValue, fmtShort, fmtCell, parseNum, count3, compact, money, euros, int, pct, dec } from "../core/fmt.js";
 import { rampLegend, swatchLegend } from "../core/charts.js";
@@ -27,53 +28,55 @@ const DEFAULT_XY = {
 };
 // Order of the column groups in the pickers (the model lists its fields in file order).
 const GROUP_ORDER = [
-  "Nombre", "Población", "Economía", "Trabajo", "Prosperidad", "Conocimiento", "Clima", "Territorio", "Riesgos",
-  "Energía y recursos", "Distritos", "Ciudadanos: ocupación", "Ciudadanos: edad", "Ciudadanos: estudios", "Ciudadanos: origen",
+  t("Nombre"), t("Población"), t("Economía"), t("Trabajo"), t("Prosperidad"), t("Conocimiento"), t("Clima"), t("Territorio"), t("Riesgos"),
+  t("Energía y recursos"), t("Distritos"), t("Ciudadanos: ocupación"), t("Ciudadanos: edad"), t("Ciudadanos: estudios"), t("Ciudadanos: origen"),
 ];
 const groupRank = (g) => { const i = GROUP_ORDER.indexOf(g); return i < 0 ? GROUP_ORDER.length : i; };
 // Table headers: short enough for a ~60 px column (they wrap to two lines; &shy; marks where a long word may break).
 // The citizen categories take their short names from citizens.json.
 const SHORT = {
-  state: "Comarca", province: "Provin&shy;cia", city: "Ciudad",
-  population: "Habi&shy;tantes", density: "Densi&shy;dad", edad_media: "Edad media", nacidos_fuera: "Nacidos fuera",
-  gdp: "PIB", gdp_pc: "PIB por hab.",
-  affiliates: "Afilia&shy;dos", agro: "Afil. agro y pesca", industria: "Afil. indus&shy;tria", construccion: "Afil. cons&shy;truc.",
-  servicios: "Afil. servi&shy;cios", agro_share: "% agro y pesca", industry_share: "% indus&shy;tria",
-  y_food: "Alimen&shy;to", y_production: "Produc&shy;ción", y_science: "Ciencia", y_culture: "Cultura",
-  renta_pc: "Renta por pers.", unemployment: "Paro por hab.", gini: "Gini", p80p20: "P80/&shy;P20", estudios_superiores: "Estud. superio&shy;res",
-  temp: "Tempe&shy;ratura", precip: "Lluvia", viento: "Viento", sol: "Horas de sol", humedad: "Hume&shy;dad",
-  land_km2: "Super&shy;ficie", forest: "Bosque", crop: "Cultivo", pasture: "Pasto", farmland: "Cultivo y pasto", shrub: "Mato&shy;rral",
-  wetland: "Hume&shy;dal", developed: "Suelo urbano", elevation: "Altitud", incendios: "Quema&shy;do", inundacion: "Inun&shy;dable",
-  turbines: "Aeroge&shy;nerad.", quarries: "Cante&shy;ras", lonja_eur: "Lonja",
-  city_type: "Tipo de ciudad", districts: "Distri&shy;tos", n_districts: "N.º de distritos", units: "Estable&shy;cim.",
-  top_activity: "Activi&shy;dad", top_lq: "Cociente local.",
-  cz_foreign_nationals: "Nacion. extran&shy;jera", cz_specialist: "Destaca",
+  state: t("Comarca"), province: t("Provin&shy;cia"), city: t("Ciudad"),
+  population: t("Habi&shy;tantes"), density: t("Densi&shy;dad"), edad_media: t("Edad media"), nacidos_fuera: t("Nacidos fuera"),
+  gdp: t("PIB"), gdp_pc: t("PIB por hab."),
+  affiliates: t("Afilia&shy;dos"), agro: t("Afil. agro y pesca"), industria: t("Afil. indus&shy;tria"), construccion: t("Afil. cons&shy;truc."),
+  servicios: t("Afil. servi&shy;cios"), agro_share: t("% agro y pesca"), industry_share: t("% indus&shy;tria"),
+  y_food: t("Alimen&shy;to"), y_production: t("Produc&shy;ción"), y_science: t("Ciencia"), y_culture: t("Cultura"),
+  renta_pc: t("Renta por pers."), unemployment: t("Paro por hab."), gini: t("Gini"), p80p20: t("P80/&shy;P20"), estudios_superiores: t("Estud. superio&shy;res"),
+  temp: t("Tempe&shy;ratura"), precip: t("Lluvia"), viento: t("Viento"), sol: t("Horas de sol"), humedad: t("Hume&shy;dad"),
+  land_km2: t("Super&shy;ficie"), forest: t("Bosque"), crop: t("Cultivo"), pasture: t("Pasto"), farmland: t("Cultivo y pasto"), shrub: t("Mato&shy;rral"),
+  wetland: t("Hume&shy;dal"), developed: t("Suelo urbano"), elevation: t("Altitud"), incendios: t("Quema&shy;do"), inundacion: t("Inun&shy;dable"),
+  turbines: t("Aeroge&shy;nerad."), quarries: t("Cante&shy;ras"), lonja_eur: t("Lonja"),
+  city_type: t("Tipo de ciudad"), districts: t("Distri&shy;tos"), n_districts: t("N.º de distritos"), units: t("Estable&shy;cim."),
+  top_activity: t("Activi&shy;dad"), top_lq: t("Cociente local."),
+  cz_foreign_nationals: t("Nacion. extran&shy;jera"), cz_specialist: t("Destaca"),
 };
 // Where a long citizen short name may break.
-const BREAKS = ["Direc|ción", "Profe|sionales", "Servi|cios", "Opera|dores", "Elemen|tales", "Secun|daria", "Extran|jero"];
-const breakable = (s) => BREAKS.reduce((t, b) => t.replace(b.replace("|", ""), b.replace("|", "&shy;")), s);
+const BREAKS = ["Direc|ción", "Profe|sionales", "Servi|cios", "Opera|dores", "Elemen|tales", "Secun|daria", "Extran|jero",
+  "Profe|sionais", "Servi|zos", "Elemen|tais", "Extran|xeiro"];
+const breakable = (s) => BREAKS.reduce((acc, b) => acc.replace(b.replace("|", ""), b.replace("|", "&shy;")), s);
 const OPS = { num: [">", "≥", "<", "≤", "="], text: ["contiene", "=", "≠"] };
 // Quick filters per level: [field, operator, value, button text].
 const PRESETS = {
-  states: [["population", "≥", 1e5, "100 mil hab. o más"], ["population", "<", 15000, "Menos de 15 mil"], ["edad_media", "≥", 52, "Edad media 52 o más"]],
-  metros: [["population", "≥", 50000, "50 mil hab. o más"], ["population", "<", 20000, "Menos de 20 mil"], ["renta_pc", "≥", 17000, "Renta 17 mil € o más"]],
-  counties: [["population", "≥", 10000, "10 mil hab. o más"], ["population", "<", 2000, "Menos de 2 mil"], ["edad_media", "≥", 55, "Edad media 55 o más"]],
+  states: [["population", "≥", 1e5, t("100 mil hab. o más")], ["population", "<", 15000, t("Menos de 15 mil")], ["edad_media", "≥", 52, t("Edad media 52 o más")]],
+  metros: [["population", "≥", 50000, t("50 mil hab. o más")], ["population", "<", 20000, t("Menos de 20 mil")], ["renta_pc", "≥", 17000, t("Renta 17 mil € o más")]],
+  counties: [["population", "≥", 10000, t("10 mil hab. o más")], ["population", "<", 2000, t("Menos de 2 mil")], ["edad_media", "≥", 55, t("Edad media 55 o más")]],
 };
 // Example text for the value box of a text column.
 const TEXT_EXAMPLE = {
-  name: { states: "Santiago", metros: "Vigo", counties: "Arzúa" }, state: "Ferrol", province: "Lugo", city: "Sí",
-  districts: "turístico", city_type: "industrial", top_activity: "bebidas", cz_specialist: "campo",
+  name: { states: "Santiago", metros: "Vigo", counties: "Arzúa" }, state: "Ferrol", province: "Lugo", city: t("Sí"),
+  districts: t("turístico"), city_type: t("industrial"), top_activity: t("bebidas"), cz_specialist: t("campo"),
 };
 // Units people type after a number, dropped before parseNum reads it ("500 m" of altitude is not 500 millions).
 const UNIT_RX = { elevation: /\s*m(etros)?$/, precip: /\s*mm$/, viento: /\s*m\/s$/, temp: /\s*[°º]\s*c?$/, sol: /\s*h(oras)?$/ };
 function parseValue(f, text) {
-  let s = text.trim().toLowerCase().replace(/\s*(km²|km2|años|habitantes|hab\.?|veces)$/, "").replace(/^[×x]\s*/, "");
+  let s = text.trim().toLowerCase().replace(/\s*(km²|km2|años|anos|habitantes|hab\.?|veces)$/, "").replace(/^[×x]\s*/, "");
   if (UNIT_RX[f.key]) s = s.replace(UNIT_RX[f.key], "");
   if (f.format === "pct" && !s.endsWith("%")) s += "%"; // a bare "5" in a percentage column means 5 %
   return parseNum(s, f.format);
 }
 // Case and accents do not count in text filters ("coruna" finds "A Coruña").
 const fold = (s) => String(s ?? "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+const opLabel = (o) => (o === "contiene" ? t("contiene") : o);
 const comma = (v) => String(v).replace(".", ",");
 const cut = (s, n = 44) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
 // Axis, tooltip and legend text. fmtShort rounds ages to whole years and writes 1402 as "1,4 mil".
@@ -134,12 +137,12 @@ export async function mount(ctx) {
   const L = () => data.levels[st.level];
 
   // --- controls -------------------------------------------------------------------------------------------------
-  const top = section(el, { title: "Explora los datos", note: "Elige qué comparar, filtra, ordena la tabla y cruza dos columnas en el gráfico. Pasa el puntero por una fila o un punto para verlo en el mapa y púlsalo para ir hasta allí; arrastra sobre el gráfico para seleccionar un grupo." });
+  const top = section(el, { title: t("Explora los datos"), note: t("Elige qué comparar, filtra, ordena la tabla y cruza dos columnas en el gráfico. Pasa el puntero por una fila o un punto para verlo en el mapa y púlsalo para ir hasta allí; arrastra sobre el gráfico para seleccionar un grupo.") });
   const lvRow = document.createElement("div");
   lvRow.className = "adv-row";
   top.appendChild(lvRow);
   segmented(lvRow, {
-    label: "Nivel", value: st.level,
+    label: t("Nivel"), value: st.level,
     options: avail.map((k) => ({ value: k, label: data.levels[k].label })),
     onChange: (v) => { st.level = v; st.filters = st.filters.filter((f) => L().field(f.key)); st.sel = null; persist(); rebuild(); },
   });
@@ -158,7 +161,7 @@ export async function mount(ctx) {
   top.appendChild(summary);
 
   // --- table ----------------------------------------------------------------------------------------------------
-  const tBody = section(el, { title: "Tabla" });
+  const tBody = section(el, { title: t("Tabla") });
   const selRow = document.createElement("div");
   selRow.className = "adv-row";
   tBody.appendChild(selRow);
@@ -167,7 +170,7 @@ export async function mount(ctx) {
   let table = null;
 
   // --- chart ----------------------------------------------------------------------------------------------------
-  const cBody = section(el, { title: "Gráfico" });
+  const cBody = section(el, { title: t("Gráfico") });
   const axes = document.createElement("div");
   axes.className = "adv-axes";
   cBody.appendChild(axes);
@@ -194,7 +197,7 @@ export async function mount(ctx) {
   const ordered = () => [...L().fields].sort((a, b) => groupRank(a.group) - groupRank(b.group));
   const fieldOpts = (withNone = false, numeric = true) => {
     const fs = ordered().filter((f) => (numeric ? f.format !== "text" : f.key !== "name"));
-    return [...(withNone ? [{ value: "", label: "Ninguno" }] : []), ...fs.map((f) => ({ value: f.key, label: f.label, group: f.group }))];
+    return [...(withNone ? [{ value: "", label: t("Ninguno") }] : []), ...fs.map((f) => ({ value: f.key, label: f.label, group: f.group }))];
   };
   const numeric = (f) => f && f.format !== "text";
   const val = (r, k) => r.v[k] ?? null;
@@ -207,17 +210,17 @@ export async function mount(ctx) {
       const v = val(r, f.key);
       if (numeric(fd)) {
         if (!fin(v)) return false;
-        const t = f.value;
-        if (f.op === ">" && !(v > t)) return false;
-        if (f.op === "≥" && !(v >= t)) return false;
-        if (f.op === "<" && !(v < t)) return false;
-        if (f.op === "≤" && !(v <= t)) return false;
-        if (f.op === "=" && !(Math.abs(v - t) <= Math.abs(t) * 0.005 + 1e-9)) return false;
+        const tv = f.value;
+        if (f.op === ">" && !(v > tv)) return false;
+        if (f.op === "≥" && !(v >= tv)) return false;
+        if (f.op === "<" && !(v < tv)) return false;
+        if (f.op === "≤" && !(v <= tv)) return false;
+        if (f.op === "=" && !(Math.abs(v - tv) <= Math.abs(tv) * 0.005 + 1e-9)) return false;
       } else {
-        const s = fold(v), t = fold(f.value);
-        if (f.op === "=" && s !== t) return false;
-        if (f.op === "≠" && s === t) return false;
-        if (f.op === "contiene" && !s.includes(t)) return false;
+        const s = fold(v), tv = fold(f.value);
+        if (f.op === "=" && s !== tv) return false;
+        if (f.op === "≠" && s === tv) return false;
+        if (f.op === "contiene" && !s.includes(tv)) return false;
       }
     }
     return true;
@@ -232,7 +235,7 @@ export async function mount(ctx) {
       if (!groups.has(f.group)) groups.set(f.group, []);
       groups.get(f.group).push(f);
     }
-    colsBox.innerHTML = `<summary class="adv-mini">Columnas (${on.size})</summary><div class="adv-cols-pop">${[...groups].map(([g, list]) => `<fieldset><legend>${esc(g)}</legend>${list.map((f) => `<label title="${esc(f.description)}"><input type="checkbox" value="${esc(f.key)}"${on.has(f.key) ? " checked" : ""}> ${esc(f.label)}</label>`).join("")}</fieldset>`).join("")}</div>`;
+    colsBox.innerHTML = `<summary class="adv-mini">${esc(t("Columnas ({n})", { n: on.size }))}</summary><div class="adv-cols-pop">${[...groups].map(([g, list]) => `<fieldset><legend>${esc(g)}</legend>${list.map((f) => `<label title="${esc(f.description)}"><input type="checkbox" value="${esc(f.key)}"${on.has(f.key) ? " checked" : ""}> ${esc(f.label)}</label>`).join("")}</fieldset>`).join("")}</div>`;
     placeCols();
   }
   // The list opens under its button; shift it left when it would stick out of the dock (phones).
@@ -249,7 +252,7 @@ export async function mount(ctx) {
     const list = st.cols[st.level].filter((x) => x !== k);
     if (e.target.checked) list.push(k);
     st.cols = { ...st.cols, [st.level]: list };
-    colsBox.querySelector("summary").textContent = `Columnas (${list.length})`;
+    colsBox.querySelector("summary").textContent = t("Columnas ({n})", { n: list.length });
     persist();
     buildTable();
     renderSources();
@@ -258,21 +261,21 @@ export async function mount(ctx) {
   function renderFilterBuilder() {
     fRow.innerHTML = "";
     const fs = ordered();
-    const fsel = selectBox(fRow, { label: "Filtro", value: fs.find((f) => f.key === "population")?.key || fs[0].key, options: fs.map((f) => ({ value: f.key, label: f.label, group: f.group })) });
+    const fsel = selectBox(fRow, { label: t("Filtro"), value: fs.find((f) => f.key === "population")?.key || fs[0].key, options: fs.map((f) => ({ value: f.key, label: f.label, group: f.group })) });
     const ops = document.createElement("select");
-    ops.setAttribute("aria-label", "Comparación");
+    ops.setAttribute("aria-label", t("Comparación"));
     const valIn = document.createElement("input");
     valIn.type = "text";
-    valIn.setAttribute("aria-label", "Valor");
+    valIn.setAttribute("aria-label", t("Valor"));
     const add = document.createElement("button");
     add.type = "button";
     add.className = "adv-mini";
-    add.textContent = "Añadir";
+    add.textContent = t("Añadir");
     // An example the value box understands: a typical (median, non-zero) value of the column.
     const example = (f) => {
       if (!numeric(f)) {
-        const t = TEXT_EXAMPLE[f.key];
-        return (typeof t === "object" ? t[st.level] : t) || "texto";
+        const tx = TEXT_EXAMPLE[f.key];
+        return (typeof tx === "object" ? tx[st.level] : tx) || t("texto");
       }
       const s = L().rows.map((r) => val(r, f.key)).filter((v) => fin(v) && v > 0).sort((a, b) => a - b);
       if (!s.length) return "";
@@ -283,9 +286,9 @@ export async function mount(ctx) {
     };
     const syncOps = () => {
       const f = L().field(fsel.value);
-      ops.innerHTML = (numeric(f) ? OPS.num : OPS.text).map((o) => `<option>${esc(o)}</option>`).join("");
+      ops.innerHTML = (numeric(f) ? OPS.num : OPS.text).map((o) => `<option value="${esc(o)}">${esc(opLabel(o))}</option>`).join("");
       const ex = example(f);
-      valIn.placeholder = ex ? `p. ej. ${ex}` : "";
+      valIn.placeholder = ex ? t("p. ej. {ex}", { ex }) : "";
       valIn.setCustomValidity("");
     };
     fsel.select.addEventListener("change", syncOps);
@@ -295,7 +298,7 @@ export async function mount(ctx) {
       const f = L().field(fsel.value);
       if (!f || !valIn.value.trim()) return;
       const v = numeric(f) ? parseValue(f, valIn.value) : valIn.value.trim();
-      if (v == null) { valIn.setCustomValidity("No es un número. Prueba con 1,5 M, 250 mil o 12 %."); valIn.reportValidity(); return; }
+      if (v == null) { valIn.setCustomValidity(t("No es un número. Prueba con 1,5 M, 250 mil o 12 %.")); valIn.reportValidity(); return; }
       valIn.setCustomValidity("");
       st.filters.push({ key: f.key, op: ops.value, value: v });
       valIn.value = "";
@@ -325,9 +328,9 @@ export async function mount(ctx) {
       const fd = L().field(f.key);
       // The chip shows the value as typed, with the decimals it needs (fmtShort would round it).
       const shown = !numeric(fd) ? f.value : fd.format === "pct" && Math.abs(f.value * 1000 - Math.round(f.value * 1000)) > 1e-6 ? pct(f.value, 2) : fmtValue(fd.format, f.value, fd.unit);
-      const txt = `${(fd?.label || f.key).replace(/\s*≈$/, "")} ${f.op} ${shown}`;
-      return `<span class="adv-fchip">${esc(txt)}<button type="button" data-rm="${i}" aria-label="Quitar el filtro ${esc(txt)}">✕</button></span>`;
-    }).join("") + (st.filters.length > 1 ? `<button type="button" class="adv-mini" data-rm="all">Quitar todos</button>` : "") + (st.filters.length && filterHighlight() ? frameBtn() : "");
+      const txt = `${(fd?.label || f.key).replace(/\s*≈$/, "")} ${opLabel(f.op)} ${shown}`;
+      return `<span class="adv-fchip">${esc(txt)}<button type="button" data-rm="${i}" aria-label="${esc(t("Quitar el filtro {txt}", { txt }))}">✕</button></span>`;
+    }).join("") + (st.filters.length > 1 ? `<button type="button" class="adv-mini" data-rm="all">${esc(t("Quitar todos"))}</button>` : "") + (st.filters.length && filterHighlight() ? frameBtn() : "");
   }
   chipsRow.addEventListener("click", (e) => {
     const i = e.target.closest("[data-rm]")?.dataset.rm;
@@ -344,10 +347,10 @@ export async function mount(ctx) {
     const maxOf = (k) => { const e = extent(lv.rows.map((r) => val(r, k))); return e ? Math.max(Math.abs(e[0]), Math.abs(e[1])) : 1; };
     const cols = [
       // The comarca (or province) rides along as a suffix, unless it repeats the name or has its own column.
-      { key: "name", label: lv.field("name")?.label || "Nombre", align: "l", width: "minmax(92px,1.7fr)", value: (r) => r.name, html: (r) => `${esc(r.name)}${st.level !== "states" && r.sub && r.sub !== r.name && !keys.includes("state") ? ` <span class="sub">${esc(r.sub)}</span>` : ""}` },
+      { key: "name", label: lv.field("name")?.label || t("Nombre"), align: "l", width: "minmax(92px,1.7fr)", value: (r) => r.name, html: (r) => `${esc(r.name)}${st.level !== "states" && r.sub && r.sub !== r.name && !keys.includes("state") ? ` <span class="sub">${esc(r.sub)}</span>` : ""}` },
       ...keys.map((k) => {
         const f = lv.field(k);
-        const title = `${f.label}${f.unit ? ` (${f.unit})` : ""}. Pulsa para ordenar.`;
+        const title = t("{label}. Pulsa para ordenar.", { label: `${f.label}${f.unit ? ` (${f.unit})` : ""}` });
         const head = short[k] ? `${short[k]}${f.label.includes("≈") ? " ≈" : ""}` : null;
         return numeric(f)
           ? { key: k, label: f.label, short: head, title, value: (r) => val(r, k), text: (r) => fmtCell(f.format, val(r, k), f.unit), tip: (r) => fmtF(f, val(r, k)), bar: k === sortKey ? { max: maxOf(k), color: "rgba(154,123,201,.32)" } : null }
@@ -356,8 +359,8 @@ export async function mount(ctx) {
     ];
     if (!table) {
       table = createTable(tableHost, {
-        caption: `Tabla de ${lv.label.toLowerCase()}`, columns: cols, rows: [], sort: { key: sortKey, dir: "desc" }, rank: true, maxHeight: 360,
-        search: `Buscar ${lv.label.toLowerCase()}`, empty: "Ningún lugar cumple los filtros o la búsqueda.",
+        caption: t("Tabla de {nivel}", { nivel: lv.label.toLowerCase() }), columns: cols, rows: [], sort: { key: sortKey, dir: "desc" }, rank: true, maxHeight: 360,
+        search: t("Buscar {nivel}", { nivel: lv.label.toLowerCase() }), empty: t("Ningún lugar cumple los filtros o la búsqueda."),
         onHover: (r) => { link.hover(r ? rowsHighlight(L(), [r]) : null); scatter.setHot(r ? r.key : null); },
         // A tap fires no pointer move, so pressing a row outlines it too (until the table loses focus).
         onClick: (r) => { L().focus(r); link.hover(rowsHighlight(L(), [r])); },
@@ -378,13 +381,13 @@ export async function mount(ctx) {
       label, value: xy[key], options: fieldOpts(none, key !== "c"),
       onChange: (v) => { xy[key] = v; if (key === "x" || key === "y") delete xy[`log${key}`]; persist(); drawScatter(); },
     });
-    mk("x", "X", false);
-    mk("y", "Y", false);
-    mk("s", "Tamaño", true);
-    mk("c", "Color", true);
+    mk("x", t("X"), false);
+    mk("y", t("Y"), false);
+    mk("s", t("Tamaño"), true);
+    mk("c", t("Color"), true);
     const logs = document.createElement("span");
     logs.className = "adv-logs";
-    logs.innerHTML = `<label class="adv-check"><input type="checkbox" data-log="x"> X logarítmico</label><label class="adv-check"><input type="checkbox" data-log="y"> Y logarítmico</label>`;
+    logs.innerHTML = `<label class="adv-check"><input type="checkbox" data-log="x"> ${esc(t("X logarítmico"))}</label><label class="adv-check"><input type="checkbox" data-log="y"> ${esc(t("Y logarítmico"))}</label>`;
     axes.appendChild(logs);
     logs.addEventListener("change", (e) => {
       const a = e.target.dataset.log;
@@ -428,7 +431,7 @@ export async function mount(ctx) {
         const m = new Map(cats.map((c, i) => [c, pal[i]]));
         color = (c) => m.get(c) || "#8b8070";
         const more = [...present].some((c) => !m.has(c));
-        legendEl.innerHTML = swatchLegend([...cats.filter((c) => present.has(c)).map((c) => ({ label: c, color: m.get(c) })), ...(more ? [{ label: "otros", color: "#8b8070" }] : [])], fc.label);
+        legendEl.innerHTML = swatchLegend([...cats.filter((c) => present.has(c)).map((c) => ({ label: c, color: m.get(c) })), ...(more ? [{ label: t("otros"), color: "#8b8070" }] : [])], fc.label);
       }
     }
     const big = [...rows].sort((a, b) => (val(b, "population") || 0) - (val(a, "population") || 0)).slice(0, st.level === "states" ? 10 : 6).map((r) => r.key);
@@ -457,11 +460,11 @@ export async function mount(ctx) {
       b.className = "adv-lensbtn";
       const on = app.state.lens?.id === lens.id;
       b.setAttribute("aria-pressed", String(on));
-      b.textContent = on ? `Lente activa: ${lens.name}` : `Ver en el mapa la lente ${lens.name}`;
+      b.textContent = on ? t("Lente activa: {name}", { name: lens.name }) : t("Ver en el mapa la lente {name}", { name: lens.name });
       b.addEventListener("click", () => { app.setLens(app.state.lens?.id === lens.id ? null : lens.id); drawScatter(); });
       lensRow.appendChild(b);
     }
-    if (!lensFields.length) lensRow.innerHTML = `<span class="adv-note">Estas columnas no tienen lente de mapa: pasa el puntero o selecciona en el gráfico para ver los lugares.</span>`;
+    if (!lensFields.length) lensRow.innerHTML = `<span class="adv-note">${esc(t("Estas columnas no tienen lente de mapa: pasa el puntero o selecciona en el gráfico para ver los lugares."))}</span>`;
     fieldInfo.innerHTML = [fx, fy, fs, fc].filter((f, i, a) => f && a.indexOf(f) === i).map((f) => `<p><b>${esc(f.label)}</b>${f.unit ? ` <span class="sub">${esc(f.unit)}</span>` : ""}: ${esc(f.description || "")}</p>`).join("");
     renderSources();
   }
@@ -473,16 +476,16 @@ export async function mount(ctx) {
     const used = [...keys].map((k) => L().field(k)).filter(Boolean);
     const has = (...list) => used.some((f) => list.includes(f.key));
     const caveats = [
-      used.some((f) => f.label.includes("≈")) && "Las columnas con ≈ son aproximaciones: medias de las casillas del territorio o medias de sus concellos ponderadas por población.",
-      has("gdp", "gdp_pc") && "El PIB es la estimación del IGE para 2023; por habitante, se divide entre la población de 2025.",
-      has("affiliates", "agro", "industria", "construccion", "servicios", "agro_share", "industry_share") && "Los afiliados a la Seguridad Social se cuentan en el concello donde viven, no donde trabajan (septiembre de 2026).",
-      has("y_science", "y_culture") && "Ciencia y cultura son estimaciones a partir de la afiliación por rama de actividad.",
-      has("renta_pc") && "La renta es la media neta por persona de 2024, no una mediana.",
-      has("unemployment") && "El paro registrado va en parados por habitante (octubre de 2026): no es la tasa de paro.",
-      used.some((f) => ["units", "districts", "n_districts", "city_type", "top_activity", "top_lq"].includes(f.key)) && "Distritos y actividades cuentan establecimientos (unidades locales), nunca empleos.",
-      has("turbines", "quarries", "lonja_eur") && "Aerogeneradores, canteras y lonja suman solo lo que sale en el mapa.",
-      "Un guion en la tabla indica que no hay dato para ese lugar.",
-      st.level === "counties" && data.countiesOffMap && `Hay ${int(data.countiesOffMap)} concellos sin casilla propia: salen en la tabla y en el gráfico, pero no se pueden marcar en el mapa.`,
+      used.some((f) => f.label.includes("≈")) && t("Las columnas con ≈ son aproximaciones: medias de las casillas del territorio o medias de sus concellos ponderadas por población."),
+      has("gdp", "gdp_pc") && t("El PIB es la estimación del IGE para 2023; por habitante, se divide entre la población de 2025."),
+      has("affiliates", "agro", "industria", "construccion", "servicios", "agro_share", "industry_share") && t("Los afiliados a la Seguridad Social se cuentan en el concello donde viven, no donde trabajan (septiembre de 2026)."),
+      has("y_science", "y_culture") && t("Ciencia y cultura son estimaciones a partir de la afiliación por rama de actividad."),
+      has("renta_pc") && t("La renta es la media neta por persona de 2024, no una mediana."),
+      has("unemployment") && t("El paro registrado va en parados por habitante (octubre de 2026): no es la tasa de paro."),
+      used.some((f) => ["units", "districts", "n_districts", "city_type", "top_activity", "top_lq"].includes(f.key)) && t("Distritos y actividades cuentan establecimientos (unidades locales), nunca empleos."),
+      has("turbines", "quarries", "lonja_eur") && t("Aerogeneradores, canteras y lonja suman solo lo que sale en el mapa."),
+      t("Un guion en la tabla indica que no hay dato para ese lugar."),
+      st.level === "counties" && data.countiesOffMap && t("Hay {n} concellos sin casilla propia: salen en la tabla y en el gráfico, pero no se pueden marcar en el mapa.", { n: int(data.countiesOffMap) }),
     ].filter(Boolean);
     srcEl.innerHTML = sourcesHtml(data, ["ige_comarcas", "ign_limites", ...used.map((f) => f.source).filter(Boolean)], caveats);
   }
@@ -492,8 +495,8 @@ export async function mount(ctx) {
     const sel = st.sel ? lv.rows.filter((r) => st.sel.has(r.key)) : [];
     link.base(sel.length ? rowsHighlight(lv, sel, { dim: true }) : filterHighlight(), { frame: sel.length > 1 || (!sel.length && st.filters.length > 0) });
     table?.setSelected(st.sel);
-    selRow.innerHTML = st.sel ? `<span class="adv-fchip">Selección en el gráfico: ${int(st.sel.size)}<button type="button" data-clear-sel aria-label="Quitar la selección">✕</button></span>${frameBtn()}
-      <label class="adv-check"><input type="checkbox" data-only${st.onlySel ? " checked" : ""}> Mostrar solo la selección</label>` : `<span class="adv-note">Consejo: arrastra sobre el gráfico de abajo para seleccionar un grupo.</span>`;
+    selRow.innerHTML = st.sel ? `<span class="adv-fchip">${esc(t("Selección en el gráfico: {n}", { n: int(st.sel.size) }))}<button type="button" data-clear-sel aria-label="${esc(t("Quitar la selección"))}">✕</button></span>${frameBtn()}
+      <label class="adv-check"><input type="checkbox" data-only${st.onlySel ? " checked" : ""}> ${esc(t("Mostrar solo la selección"))}</label>` : `<span class="adv-note">${esc(t("Consejo: arrastra sobre el gráfico de abajo para seleccionar un grupo."))}</span>`;
     refreshRows();
     updateSummary();
   }
@@ -517,7 +520,8 @@ export async function mount(ctx) {
   function updateSummary() {
     const rows = filtered();
     const pop = rows.reduce((a, r) => a + (val(r, "population") || 0), 0);
-    summary.innerHTML = `<b>${int(rows.length)}</b> de ${int(L().rows.length)} ${esc(L().label.toLowerCase())} · ${count3(pop)} habitantes${st.sel ? ` · <b>${int(st.sel.size)}</b> en la selección` : ""}`;
+    const vars = { n: int(rows.length), total: int(L().rows.length), nivel: esc(L().label.toLowerCase()), pop: count3(pop), sel: st.sel ? int(st.sel.size) : "" };
+    summary.innerHTML = st.sel ? t("<b>{n}</b> de {total} {nivel} · {pop} habitantes · <b>{sel}</b> en la selección", vars) : t("<b>{n}</b> de {total} {nivel} · {pop} habitantes", vars);
   }
   function refresh() {
     link.hover(null);

@@ -8,6 +8,7 @@
 import { fin, withAlpha } from "./util.js";
 import { mapArea, frameBox, frameIfHidden } from "./frame.js";
 import { REF_KM } from "../../../render/art/lod.js";
+import { t } from "../../../i18n.js";
 
 const HOVER_COLOR = "#fff3c4";
 const GOLD = "#ffd36a";
@@ -67,18 +68,18 @@ export function createLinker(app) {
   }
   function tick() {
     if (!beacon) { ticking = false; return; }
-    const t = performance.now() - pulseT0;
-    const done = t >= BEACON_MS;
-    pulse = done ? BEACON_STILL : (t % PULSE_MS) / PULSE_MS;
+    const dt = performance.now() - pulseT0;
+    const done = dt >= BEACON_MS;
+    pulse = done ? BEACON_STILL : (dt % PULSE_MS) / PULSE_MS;
     app.requestDraw();
     if (done) ticking = false;
     else requestAnimationFrame(tick);
   }
-  function drawBeacon(ctx, t) {
-    if (!t) return;
+  function drawBeacon(ctx, tg) {
+    if (!tg) return;
     const cam = app.cam;
-    const [sx0, sy0] = cam.toScreen(t.box.x0, t.box.y0);
-    const [sx1, sy1] = cam.toScreen(t.box.x1, t.box.y1);
+    const [sx0, sy0] = cam.toScreen(tg.box.x0, tg.box.y0);
+    const [sx1, sy1] = cam.toScreen(tg.box.x1, tg.box.y1);
     const w = sx1 - sx0, h = sy1 - sy0;
     const cx = (sx0 + sx1) / 2, cy = (sy0 + sy1) / 2;
     const area = mapArea(app);
@@ -112,9 +113,9 @@ export function createLinker(app) {
         ctx.beginPath(); ctx.arc(cx, cy, 2.6, 0, Math.PI * 2);
         ctx.fillStyle = "#fff3c4"; ctx.fill();
         ctx.strokeStyle = "rgba(12,8,2,.9)"; ctx.lineWidth = 1.2; ctx.stroke();
-        if (t.label) label(ctx, t.label, cx, cy - r - 12, area);
-      } else if (t.label) label(ctx, t.label, cx, Math.max(area.y0 + 14, sy0 - 12), area);
-    } else if (t.label) {
+        if (tg.label) label(ctx, tg.label, cx, cy - r - 12, area);
+      } else if (tg.label) label(ctx, tg.label, cx, Math.max(area.y0 + 14, sy0 - 12), area);
+    } else if (tg.label) {
       // Off the free area: an arrow on its edge, pointing at the place.
       const ax = Math.max(area.x0 + inset, Math.min(area.x1 - inset, cx));
       const ay = Math.max(area.y0 + inset, Math.min(area.y1 - inset, cy));
@@ -130,7 +131,7 @@ export function createLinker(app) {
       ctx.stroke();
       ctx.fill();
       ctx.restore();
-      label(ctx, `${t.label} (fuera de la vista)`, ax, ay + (cy > ay ? -18 : 18), area);
+      label(ctx, t("{name} (fuera de la vista)", { name: tg.label }), ax, ay + (cy > ay ? -18 : 18), area);
     }
     ctx.restore();
   }
@@ -200,8 +201,8 @@ export function createBubbles(app, id, opts = {}) {
   };
   const radius = (it) => {
     const vmax = o.vMax || 1;
-    const t = fin(it.value) && it.value > 0 ? Math.sqrt(it.value / vmax) : 0;
-    return Math.max(o.minR, o.rMax * t) * zoomK();
+    const k = fin(it.value) && it.value > 0 ? Math.sqrt(it.value / vmax) : 0;
+    return Math.max(o.minR, o.rMax * k) * zoomK();
   };
   const overlay = {
     id, z: o.z ?? 20, space: "world", snapshot: true,

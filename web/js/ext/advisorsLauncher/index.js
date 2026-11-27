@@ -10,11 +10,12 @@
 import { emblem } from "../advisors/core/emblems.js";
 import { int } from "../advisors/core/fmt.js";
 import { esc, el } from "../advisors/core/util.js";
+import { t } from "../../i18n.js";
 
 // Reading order; an advisor missing from this list goes just before the Explorer.
 const ORDER = ["economy", "prosperity", "commerce", "energy", "people", "knowledge", "fp", "culture", "land"];
 const FACES = ["economy", "culture", "land", "people", "commerce"]; // the medallions on the phone card
-const WORDS = { 9: "Nueve", 10: "Diez", 11: "Once", 12: "Doce" };
+const WORDS = { 9: t("Nueve"), 10: t("Diez"), 11: t("Once"), 12: t("Doce") };
 const PHONE = "(max-width: 700px)";
 
 function injectCss() {
@@ -41,13 +42,13 @@ export async function install(app) {
 
   const nav = el("nav", "panel");
   nav.id = "adv-launcher";
-  nav.setAttribute("aria-label", "Asesores");
+  nav.setAttribute("aria-label", t("Asesores"));
   nav.innerHTML = `
-    <div class="al-head"><h2>Asesores</h2><p>${WORDS[list.length] || list.length} formas de leer Galicia</p></div>
+    <div class="al-head"><h2>${t("Asesores")}</h2><p>${t("{n} formas de leer Galicia", { n: WORDS[list.length] || list.length })}</p></div>
     <ul class="al-list">${list.map((a) => `<li><button type="button" data-adv="${a.id}" title="${esc(a.blurb)}">${emblem(a, 30)}<span>${esc(a.name)}</span></button></li>`).join("")}</ul>
     <div class="al-find" hidden></div>
-    <button type="button" class="al-all" data-adv="council" aria-label="Ver los ${list.length} asesores">
-      <span class="al-faces">${faces.map((a) => emblem(a, 28)).join("")}</span><b>${list.length} asesores</b><span class="al-go" aria-hidden="true">›</span></button>`;
+    <button type="button" class="al-all" data-adv="council" aria-label="${t("Ver los {n} asesores", { n: list.length })}">
+      <span class="al-faces">${faces.map((a) => emblem(a, 28)).join("")}</span><b>${t("{n} asesores", { n: list.length })}</b><span class="al-go" aria-hidden="true">›</span></button>`;
   const find = nav.querySelector(".al-find");
 
   // --- the figure: burned area in the latest year of the series --------------------------------------------------
@@ -60,16 +61,16 @@ export async function install(app) {
     const first = fires.years[0];
     year = fires.years[last];
     const long = top === last
-      ? `quemadas en ${year}, el máximo de la serie ${first}-${year}.`
-      : `quemadas en ${year}. El máximo de ${first}-${year}: ${int(ha[top])} ha en ${fires.years[top]}.`;
-    const short = top === last ? `quemadas en ${year}, máximo desde ${first}` : `quemadas en ${year}`;
+      ? t("quemadas en {year}, el máximo de la serie {first}-{year}.", { year, first })
+      : t("quemadas en {year}. El máximo de {first}-{year}: {ha} ha en {top}.", { year, first, ha: int(ha[top]), top: fires.years[top] });
+    const short = top === last ? t("quemadas en {year}, máximo desde {first}", { year, first }) : t("quemadas en {year}", { year });
     find.innerHTML = `
       <span class="al-mark">${emblem(land, 40)}</span>
       <p class="al-fig">${int(ha[last])} ha</p>
       <p class="al-txt"><span class="al-long">${long}</span><span class="al-short">${short}</span></p>
-      <p class="al-src">Fuente: EFFIS, desde unas 30 ha</p>
-      <button type="button" class="al-cta" data-fires><span class="al-long">Ver los incendios</span><span class="al-short" aria-hidden="true">Ver</span></button>`;
-    find.querySelector("[data-fires]").setAttribute("aria-label", `Ver los incendios de ${year} en Territorio`);
+      <p class="al-src">${t("Fuente: EFFIS, desde unas 30 ha")}</p>
+      <button type="button" class="al-cta" data-fires><span class="al-long">${t("Ver los incendios")}</span><span class="al-short" aria-hidden="true">${t("Ver")}</span></button>`;
+    find.querySelector("[data-fires]").setAttribute("aria-label", t("Ver los incendios de {year} en Territorio", { year }));
     find.hidden = false;
     fit();
   }
@@ -119,21 +120,24 @@ export async function install(app) {
 
   // --- placement ------------------------------------------------------------------------------------------------
   const phone = matchMedia(PHONE);
-  // Short screens: tighter rows and no figure, so the list ends above the minimap (it scrolls if even that is too
-  // tall). Phones: the card must clear the round minimap button.
+  // Short windows, so the list ends above the minimap: first tighter rows and a two-line figure (al-compact), then no
+  // figure (al-bare); it scrolls if even that is too tall. Phones: the card must clear the round minimap button.
   function fit() {
-    nav.classList.remove("al-compact");
+    nav.classList.remove("al-compact", "al-bare");
     nav.style.removeProperty("--al-max"); // measure the natural height, not the last limit
     nav.style.marginBottom = "";
     if (nav.hidden) return;
     if (phone.matches) {
-      const r = nav.getBoundingClientRect(), t = document.getElementById("btn-minimap")?.getBoundingClientRect();
-      if (r.height && t?.height && r.bottom > t.top - 6 && r.top < t.bottom) nav.style.marginBottom = `${Math.ceil(r.bottom - t.top + 6)}px`;
+      const r = nav.getBoundingClientRect(), mb = document.getElementById("btn-minimap")?.getBoundingClientRect();
+      if (r.height && mb?.height && r.bottom > mb.top - 6 && r.top < mb.bottom) nav.style.marginBottom = `${Math.ceil(r.bottom - mb.top + 6)}px`;
       return;
     }
     const mini = document.getElementById("minimap-wrap")?.getBoundingClientRect();
     const limit = mini?.height ? mini.top - 8 : innerHeight - 12;
-    if (nav.getBoundingClientRect().bottom > limit) nav.classList.add("al-compact");
+    for (const step of ["al-compact", "al-bare"]) {
+      if (nav.getBoundingClientRect().bottom <= limit) break;
+      nav.classList.add(step);
+    }
     nav.style.setProperty("--al-max", `${Math.max(160, Math.floor(limit - nav.getBoundingClientRect().top))}px`);
   }
   // On phones the card is part of the bottom stack (legend, credits, lens dock), so it never covers any of them.

@@ -1,6 +1,7 @@
 // Top-bar search over cities and comarcas: prefix matches first, then word-prefix, then substring; ties by population.
 import { esc, popShort } from "../format.js";
 import { icon } from "../ui/icon.js";
+import { t } from "../i18n.js";
 
 const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 const MAX = 8;
@@ -14,7 +15,7 @@ export function initSearch(opts) {
   if (!input || !box) return { focus() {}, close() {}, get isOpen() { return false; } };
   // The full placeholder only fits the wide search box; narrower ones say just "Search".
   const narrow = matchMedia("(max-width: 1120px)");
-  const setPlaceholder = () => (input.placeholder = narrow.matches ? "Buscar" : "Buscar ciudades y comarcas");
+  const setPlaceholder = () => (input.placeholder = narrow.matches ? t("Buscar") : t("Buscar ciudades y comarcas"));
   setPlaceholder();
   narrow.addEventListener?.("change", setPlaceholder);
 
@@ -26,7 +27,7 @@ export function initSearch(opts) {
   (opts.states || []).forEach((s, index) => {
     if (!s) return;
     entries.push({ kind: "state", index, name: s.name, n: norm(s.name), full: "", abbr: "", // abbr repeats across comarcas: not an exact-match key
-      pop: s.population || 0, sub: "Comarca", label: s.name });
+      pop: s.population || 0, sub: t("Comarca"), label: s.name });
   });
 
   let results = [];
@@ -64,7 +65,7 @@ export function initSearch(opts) {
 
   function render() {
     if (!results.length) {
-      box.innerHTML = input.value.trim() ? `<div class="sr-empty">Ninguna ciudad ni comarca coincide con “${esc(input.value.trim())}”</div>` : "";
+      box.innerHTML = input.value.trim() ? `<div class="sr-empty">${esc(t("Ninguna ciudad ni comarca coincide con “{q}”", { q: input.value.trim() }))}</div>` : "";
       box.hidden = !input.value.trim();
       input.setAttribute("aria-expanded", String(!box.hidden));
       input.removeAttribute("aria-activedescendant");

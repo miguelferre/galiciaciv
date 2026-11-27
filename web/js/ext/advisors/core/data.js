@@ -8,6 +8,7 @@
 //   row   = {key, name, sub, level, ref, v: {fieldKey: value}}
 //   field = {key, label, format, unit, higher_is, source, description, lens?, group, derived?}
 import { fin, ratio } from "./util.js";
+import { t } from "../../../i18n.js";
 import { frameBox } from "./frame.js";
 import { isMoneyUnit } from "../../../format.js";
 import { stateIndex } from "../../../world.js";
@@ -16,26 +17,26 @@ import { REF_KM } from "../../../render/art/lod.js";
 // Land cover classes of states.json `land` (concellos and ciudades only carry forest, crop, pasture and developed).
 export const LAND_KEYS = ["forest", "crop", "pasture", "shrub", "wetland", "developed"];
 export const LAND_LABEL = {
-  forest: "Bosque", crop: "Cultivo", pasture: "Pasto", shrub: "Matorral", wetland: "Humedal", developed: "Suelo urbanizado",
+  forest: t("Bosque"), crop: t("Cultivo"), pasture: t("Pasto"), shrub: t("Matorral"), wetland: t("Humedal"), developed: t("Suelo urbanizado"),
 };
 export const LAND_COLOR = {
   forest: "#3f7a3a", crop: "#d2c457", pasture: "#93b852", shrub: "#c9a874", wetland: "#4f9a86", developed: "#9a8f9e",
 };
 
 const GROUPS = {
-  "Nombre": ["name", "state", "province", "city"],
-  "Población": ["population", "density", "edad_media", "nacidos_fuera"],
-  "Economía": ["gdp", "gdp_pc"],
-  "Trabajo": ["affiliates", "agro", "industria", "construccion", "servicios", "agro_share", "industry_share", "y_food", "y_production", "y_science", "y_culture"],
-  "Prosperidad": ["renta_pc", "unemployment", "gini", "p80p20"],
-  "Conocimiento": ["estudios_superiores"],
-  "Clima": ["temp", "precip", "viento", "sol", "humedad"],
-  "Territorio": ["land_km2", "forest", "crop", "pasture", "farmland", "shrub", "wetland", "developed", "elevation"],
-  "Riesgos": ["incendios", "inundacion"],
-  "Energía y recursos": ["turbines", "quarries", "lonja_eur"],
+  [t("Nombre")]: ["name", "state", "province", "city"],
+  [t("Población")]: ["population", "density", "edad_media", "nacidos_fuera"],
+  [t("Economía")]: ["gdp", "gdp_pc"],
+  [t("Trabajo")]: ["affiliates", "agro", "industria", "construccion", "servicios", "agro_share", "industry_share", "y_food", "y_production", "y_science", "y_culture"],
+  [t("Prosperidad")]: ["renta_pc", "unemployment", "gini", "p80p20"],
+  [t("Conocimiento")]: ["estudios_superiores"],
+  [t("Clima")]: ["temp", "precip", "viento", "sol", "humedad"],
+  [t("Territorio")]: ["land_km2", "forest", "crop", "pasture", "farmland", "shrub", "wetland", "developed", "elevation"],
+  [t("Riesgos")]: ["incendios", "inundacion"],
+  [t("Energía y recursos")]: ["turbines", "quarries", "lonja_eur"],
 };
 const GROUP_OF = new Map(Object.entries(GROUPS).flatMap(([g, keys]) => keys.map((k) => [k, g])));
-const groupOf = (k) => GROUP_OF.get(k) || "Otros";
+const groupOf = (k) => GROUP_OF.get(k) || t("Otros");
 
 // Column key → lens id (lenses.json), where a lens shows the same measure. The unemployment lens counts per 100
 // inhabitants (the column is a fraction), so use the lens as it is and never borrow its domain. Crop and pasture only
@@ -48,29 +49,29 @@ const LENS_OF = Object.fromEntries([
 
 // What states.json and cities.json give on their own, for the case where counties.json did not load.
 const FALLBACK = {
-  population: { label: "Población", format: "int", unit: "habitantes", source: "ine_padron" },
-  gdp: { label: "PIB", format: "eur", unit: "euros", higher_is: "good", source: "ige_pib" },
-  gdp_pc: { label: "PIB por habitante", format: "eur", unit: "euros por habitante", higher_is: "good", source: "ige_pib" },
-  affiliates: { label: "Afiliados", format: "int", unit: "personas", source: "ige_afiliacion" },
-  agro: { label: "Afiliados en agricultura y pesca", format: "int", unit: "personas", source: "ige_afiliacion" },
-  industria: { label: "Afiliados en industria", format: "int", unit: "personas", source: "ige_afiliacion" },
-  construccion: { label: "Afiliados en construcción", format: "int", unit: "personas", source: "ige_afiliacion" },
-  servicios: { label: "Afiliados en servicios", format: "int", unit: "personas", source: "ige_afiliacion" },
-  unemployment: { label: "Paro registrado", format: "pct", unit: "parados por habitante", higher_is: "bad", source: "ige_paro" },
-  renta_pc: { label: "Renta neta por persona", format: "eur", unit: "euros por persona", higher_is: "good", source: "ine_adrh" },
+  population: { label: t("Población"), format: "int", unit: t("habitantes"), source: "ine_padron" },
+  gdp: { label: t("PIB"), format: "eur", unit: t("euros"), higher_is: "good", source: "ige_pib" },
+  gdp_pc: { label: t("PIB por habitante"), format: "eur", unit: t("euros por habitante"), higher_is: "good", source: "ige_pib" },
+  affiliates: { label: t("Afiliados"), format: "int", unit: t("personas"), source: "ige_afiliacion" },
+  agro: { label: t("Afiliados en agricultura y pesca"), format: "int", unit: t("personas"), source: "ige_afiliacion" },
+  industria: { label: t("Afiliados en industria"), format: "int", unit: t("personas"), source: "ige_afiliacion" },
+  construccion: { label: t("Afiliados en construcción"), format: "int", unit: t("personas"), source: "ige_afiliacion" },
+  servicios: { label: t("Afiliados en servicios"), format: "int", unit: t("personas"), source: "ige_afiliacion" },
+  unemployment: { label: t("Paro registrado"), format: "pct", unit: t("parados por habitante"), higher_is: "bad", source: "ige_paro" },
+  renta_pc: { label: t("Renta neta por persona"), format: "eur", unit: t("euros por persona"), higher_is: "good", source: "ine_adrh" },
 };
 
 // Columns this model adds beside counties.json.
 const EXTRA = {
-  farmland: { label: "Cultivo y pasto", format: "pct", unit: "parte de la superficie", source: "worldcover", description: "Cultivo más pasto (ESA WorldCover 2021)." },
-  shrub: { label: "Matorral", format: "pct", unit: "parte de la superficie", source: "worldcover", description: "Parte de la superficie de la comarca cubierta por matorral (ESA WorldCover 2021, media de sus casillas)." },
-  wetland: { label: "Humedal", format: "pct", unit: "parte de la superficie", source: "worldcover", description: "Parte de la superficie de la comarca que es humedal (ESA WorldCover 2021, media de sus casillas)." },
-  incendios: { label: "Superficie quemada ≈", format: "pct", unit: "parte de la superficie, 2016 a 2025", higher_is: "bad", source: "effis", description: "Media, sobre las casillas del territorio, de la parte de cada casilla dentro de al menos un perímetro quemado entre 2016 y 2025 (EFFIS). La mayoría de los incendios pequeños no salen." },
-  inundacion: { label: "Zona inundable ≈", format: "pct", unit: "parte de la superficie, T=100", higher_is: "bad", source: "snczi", description: "Media, sobre las casillas del territorio, de la parte de cada casilla dentro de la lámina de inundación de 100 años de retorno (SNCZI). Solo hay lámina en los tramos estudiados." },
-  elevation: { label: "Altitud media ≈", format: "int", unit: "metros sobre el nivel del mar", source: "mdt_ign", description: "Media de la altitud de las casillas del territorio (MDT del IGN)." },
-  turbines: { label: "Aerogeneradores en el mapa", format: "int", unit: "aerogeneradores", source: "xunta_eolica", description: "Suma de los aerogeneradores de las casillas con recurso eólico en el mapa (2 o más por casilla). La capa junta parques en funcionamiento, autorizados y en obras." },
-  quarries: { label: "Canteras en el mapa", format: "int", unit: "explotaciones", source: "igme_bdmin", description: "Explotaciones de rocas y minerales marcadas como activas en la base BDMIN del IGME (servicio de 2015), sumadas sobre el mapa." },
-  lonja_eur: { label: "Venta en lonja", format: "eur", unit: "euros en el año", source: "pesca_lonxas", description: "Primera venta de pesca fresca en las lonjas del territorio (Pesca de Galicia, 2025). Cero: no hay lonja en el mapa." },
+  farmland: { label: t("Cultivo y pasto"), format: "pct", unit: t("parte de la superficie"), source: "worldcover", description: t("Cultivo más pasto (ESA WorldCover 2021).") },
+  shrub: { label: t("Matorral"), format: "pct", unit: t("parte de la superficie"), source: "worldcover", description: t("Parte de la superficie de la comarca cubierta por matorral (ESA WorldCover 2021, media de sus casillas).") },
+  wetland: { label: t("Humedal"), format: "pct", unit: t("parte de la superficie"), source: "worldcover", description: t("Parte de la superficie de la comarca que es humedal (ESA WorldCover 2021, media de sus casillas).") },
+  incendios: { label: t("Superficie quemada ≈"), format: "pct", unit: t("parte de la superficie, 2016 a 2025"), higher_is: "bad", source: "effis", description: t("Media, sobre las casillas del territorio, de la parte de cada casilla dentro de al menos un perímetro quemado entre 2016 y 2025 (EFFIS). La mayoría de los incendios pequeños no salen.") },
+  inundacion: { label: t("Zona inundable ≈"), format: "pct", unit: t("parte de la superficie, T=100"), higher_is: "bad", source: "snczi", description: t("Media, sobre las casillas del territorio, de la parte de cada casilla dentro de la lámina de inundación de 100 años de retorno (SNCZI). Solo hay lámina en los tramos estudiados.") },
+  elevation: { label: t("Altitud media ≈"), format: "int", unit: t("metros sobre el nivel del mar"), source: "mdt_ign", description: t("Media de la altitud de las casillas del territorio (MDT del IGN).") },
+  turbines: { label: t("Aerogeneradores en el mapa"), format: "int", unit: t("aerogeneradores"), source: "xunta_eolica", description: t("Suma de los aerogeneradores de las casillas con recurso eólico en el mapa (2 o más por casilla). La capa junta parques en funcionamiento, autorizados y en obras.") },
+  quarries: { label: t("Canteras en el mapa"), format: "int", unit: t("explotaciones"), source: "igme_bdmin", description: t("Explotaciones de rocas y minerales marcadas como activas en la base BDMIN del IGME (servicio de 2015), sumadas sobre el mapa.") },
+  lonja_eur: { label: t("Venta en lonja"), format: "eur", unit: t("euros en el año"), source: "pesca_lonxas", description: t("Primera venta de pesca fresca en las lonjas del territorio (Pesca de Galicia, 2025). Cero: no hay lonja en el mapa.") },
 };
 const CELL_KEYS = ["incendios", "inundacion", "elevation"];
 const RESOURCE_KEYS = ["turbines", "quarries", "lonja_eur"];
@@ -80,31 +81,31 @@ const YIELD_SOURCE = { food: "ige_afiliacion", production: "ige_afiliacion", sci
 
 // How the comarca columns that are not read straight from the concello table are built.
 const COMARCA_NOTE = {
-  population: "Habitantes de la comarca (padrón del INE a 1 de enero de 2025).",
-  land_km2: "Suma de la superficie de sus concellos.",
-  density: "Población de la comarca entre la suma de la superficie de sus concellos.",
-  gdp: "Suma del PIB de 2023 que el IGE estima para cada concello de la comarca.",
-  gdp_pc: "PIB de 2023 de la comarca entre su población de 2025.",
-  affiliates: "Afiliaciones a la Seguridad Social de quienes viven en la comarca (IGE, septiembre de 2026).",
-  agro: "Suma de sus concellos. No incluye los datos que el IGE oculta.",
-  industria: "Suma de sus concellos. No incluye los datos que el IGE oculta.",
-  construccion: "Suma de sus concellos. No incluye los datos que el IGE oculta.",
-  servicios: "Suma de sus concellos. No incluye los datos que el IGE oculta.",
-  agro_share: "Afiliados en agricultura y pesca entre todos los afiliados, en los concellos con dato.",
-  industry_share: "Afiliados en industria entre todos los afiliados, en los concellos con dato.",
-  unemployment: "Parados registrados en octubre de 2026 entre la población de 2025. No es la tasa de paro.",
-  renta_pc: "Media de la renta neta por persona de sus concellos (INE, 2024), ponderada por población. Es una aproximación.",
-  edad_media: "Edad media de sus concellos ponderada por población (IGE, padrón de 2025).",
-  nacidos_fuera: "Personas nacidas fuera de Galicia entre toda la población (IGE, padrón de 2025).",
-  forest: "Parte de la superficie de la comarca cubierta por bosque (ESA WorldCover 2021, media de sus casillas).",
-  crop: "Parte de la superficie de la comarca en cultivos (ESA WorldCover 2021, media de sus casillas).",
-  pasture: "Parte de la superficie de la comarca en pasto o prado (ESA WorldCover 2021, media de sus casillas).",
-  developed: "Parte de la superficie de la comarca con edificios y calles (ESA WorldCover 2021, media de sus casillas).",
+  population: t("Habitantes de la comarca (padrón del INE a 1 de enero de 2025)."),
+  land_km2: t("Suma de la superficie de sus concellos."),
+  density: t("Población de la comarca entre la suma de la superficie de sus concellos."),
+  gdp: t("Suma del PIB de 2023 que el IGE estima para cada concello de la comarca."),
+  gdp_pc: t("PIB de 2023 de la comarca entre su población de 2025."),
+  affiliates: t("Afiliaciones a la Seguridad Social de quienes viven en la comarca (IGE, septiembre de 2026)."),
+  agro: t("Suma de sus concellos. No incluye los datos que el IGE oculta."),
+  industria: t("Suma de sus concellos. No incluye los datos que el IGE oculta."),
+  construccion: t("Suma de sus concellos. No incluye los datos que el IGE oculta."),
+  servicios: t("Suma de sus concellos. No incluye los datos que el IGE oculta."),
+  agro_share: t("Afiliados en agricultura y pesca entre todos los afiliados, en los concellos con dato."),
+  industry_share: t("Afiliados en industria entre todos los afiliados, en los concellos con dato."),
+  unemployment: t("Parados registrados en octubre de 2026 entre la población de 2025. No es la tasa de paro."),
+  renta_pc: t("Media de la renta neta por persona de sus concellos (INE, 2024), ponderada por población. Es una aproximación."),
+  edad_media: t("Edad media de sus concellos ponderada por población (IGE, padrón de 2025)."),
+  nacidos_fuera: t("Personas nacidas fuera de Galicia entre toda la población (IGE, padrón de 2025)."),
+  forest: t("Parte de la superficie de la comarca cubierta por bosque (ESA WorldCover 2021, media de sus casillas)."),
+  crop: t("Parte de la superficie de la comarca en cultivos (ESA WorldCover 2021, media de sus casillas)."),
+  pasture: t("Parte de la superficie de la comarca en pasto o prado (ESA WorldCover 2021, media de sus casillas)."),
+  developed: t("Parte de la superficie de la comarca con edificios y calles (ESA WorldCover 2021, media de sus casillas)."),
 };
 
 const makeField = (key, label, format, o = {}) => ({
   key, label, format, unit: o.unit || null, higher_is: o.higher_is || "neutral", source: o.source || "",
-  description: o.description || "", lens: o.lens || null, group: o.group || "Otros", derived: !!o.derived,
+  description: o.description || "", lens: o.lens || null, group: o.group || t("Otros"), derived: !!o.derived,
 });
 
 const total = (rows, k) => {
@@ -175,7 +176,7 @@ export function buildData(app) {
 
   // --- resources on the map -------------------------------------------------------------------------------------
   const items = resources?.items || [];
-  const typeById = new Map((resources?.types || []).map((t) => [t.id, t]));
+  const typeById = new Map((resources?.types || []).map((ty) => [ty.id, ty]));
   const resourceKey = (it) => (it.type === "eolico" ? "turbines" : it.type === "lonja" ? "lonja_eur" : typeById.get(it.type)?.category === "mineral" ? "quarries" : null);
   const resourcesBy = (placeOf) => {
     const m = new Map();
@@ -219,7 +220,7 @@ export function buildData(app) {
       cols.forEach((k, j) => (v[k] = r[j]));
       const ref = worldIdx.get(v.geoid) ?? i;
       v.city_id = v.city || null;
-      v.city = v.city_id ? "Sí" : "No";
+      v.city = v.city_id ? t("Sí") : t("No");
       v.farmland = farm(v);
       for (const k of CELL_KEYS) v[k] = cellMean(countyCells.get(ref), k);
       countyRows.push({ key: v.geoid, name: v.name, full: v.name, sub: v.state, level: "counties", ref, v });
@@ -237,7 +238,7 @@ export function buildData(app) {
   const field = (key, over = {}) => {
     const y = key.startsWith("y_") ? yields.find((x) => `y_${x.key}` === key) : null;
     const d = y
-      ? { label: `${y.label} (afiliados${y.branches ? ", estimación" : ""})`, format: "int", unit: "personas", source: YIELD_SOURCE[y.key], description: y.description }
+      ? { label: y.branches ? t("{label} (afiliados, estimación)", { label: y.label }) : t("{label} (afiliados)", { label: y.label }), format: "int", unit: t("personas"), source: YIELD_SOURCE[y.key], description: y.description }
       : columnDef.get(key) || EXTRA[key] || FALLBACK[key];
     if (!d) return null;
     const lens = LENS_OF[key];
@@ -248,10 +249,10 @@ export function buildData(app) {
   };
   const columnKeys = counties ? counties.fields.map((f) => f.key).filter((k) => !["geoid", "name", "state", "province", "city", "cell"].includes(k)) : Object.keys(FALLBACK);
   const yieldKeys = yields.map((y) => `y_${y.key}`);
-  const nameField = (label) => makeField("name", label, "text", { group: "Nombre" });
-  const textField = (key, label, description, source = "") => makeField(key, label, "text", { group: "Nombre", description, source });
-  const stateField = textField("state", "Comarca", "Comarca del concello (IGE, tabla 2246).", "ige_comarcas");
-  const provinceField = textField("province", "Provincia", "Provincia.", "ige_comarcas");
+  const nameField = (label) => makeField("name", label, "text", { group: t("Nombre") });
+  const textField = (key, label, description, source = "") => makeField(key, label, "text", { group: t("Nombre"), description, source });
+  const stateField = textField("state", t("Comarca"), t("Comarca del concello (IGE, tabla 2246)."), "ige_comarcas");
+  const provinceField = textField("province", t("Provincia"), t("Provincia."), "ige_comarcas");
 
   // --- comarcas -------------------------------------------------------------------------------------------------
   const stateRows = [];
@@ -281,15 +282,15 @@ export function buildData(app) {
     const approx = (climate || k === "renta_pc") && def && !def.label.endsWith("≈");
     return field(k, {
       label: approx ? `${def.label} ≈` : null, derived: true,
-      description: climate ? `Media sobre las casillas de la comarca de los valores interpolados desde las estaciones de MeteoGalicia (2025).` : COMARCA_NOTE[k],
+      description: climate ? t("Media sobre las casillas de la comarca de los valores interpolados desde las estaciones de MeteoGalicia (2025).") : COMARCA_NOTE[k],
     });
   };
   // Gini, P80/P20 and higher education cannot be added up from concellos with what the table holds.
   const comarcaKeys = [...new Set([...columnKeys.filter((k) => !["gini", "p80p20", "estudios_superiores"].includes(k)), "shrub", "wetland", "farmland", ...CELL_KEYS, ...yieldKeys, ...RESOURCE_KEYS])];
   const states_ = makeLevel({
-    id: "states", label: "Comarcas", noun: "comarca",
+    id: "states", label: t("Comarcas"), noun: t("comarca"),
     rows: comarcaRows,
-    fields: [nameField("Comarca"), provinceField, ...comarcaKeys.map(comarcaField)].filter(Boolean),
+    fields: [nameField(t("Comarca")), provinceField, ...comarcaKeys.map(comarcaField)].filter(Boolean),
     highlight: (rows) => ({ states: new Set(rows.map((r) => r.ref)) }),
     rowAtCell: (cell) => (owner[cell] >= 0 ? stateRows[owner[cell]] || null : null),
     focus: (row) => pick(() => app.selectState(row.ref, { fly: true })),
@@ -310,9 +311,9 @@ export function buildData(app) {
   const metroByCity = new Map(metroRows.map((r) => [r.ref, r]));
   const cityKeys = [...new Set([...columnKeys, "farmland", ...CELL_KEYS, ...yieldKeys, ...RESOURCE_KEYS])];
   const metros = makeLevel({
-    id: "metros", label: "Ciudades", noun: "ciudad",
+    id: "metros", label: t("Ciudades"), noun: t("ciudad"),
     rows: metroRows,
-    fields: [nameField("Ciudad"), stateField, provinceField, ...cityKeys.filter((k) => metroRows.some((r) => r.v[k] != null)).map((k) => field(k))].filter(Boolean),
+    fields: [nameField(t("Ciudad")), stateField, provinceField, ...cityKeys.filter((k) => metroRows.some((r) => r.v[k] != null)).map((k) => field(k))].filter(Boolean),
     highlight: (rows, o = {}) => {
       const cells = new Set();
       for (const r of rows) for (const c of r.ref.footprint || [r.ref.cell]) cells.add(c);
@@ -331,11 +332,11 @@ export function buildData(app) {
     const cellsOfRow = (r) => countyCells.get(r.ref) || (Number.isInteger(r.v.cell) ? [r.v.cell] : []);
     const countyKeys = [...columnKeys, "farmland", ...CELL_KEYS];
     counties_ = makeLevel({
-      id: "counties", label: "Concellos", noun: "concello",
+      id: "counties", label: t("Concellos"), noun: t("concello"),
       rows: countyRows,
       fields: [
-        nameField("Concello"), stateField, provinceField,
-        textField("city", "Ciudad", "Sí cuando el concello tiene 10 000 habitantes o más y sale en el mapa como ciudad.", "ine_padron"),
+        nameField(t("Concello")), stateField, provinceField,
+        textField("city", t("Ciudad"), t("Sí cuando el concello tiene 10 000 habitantes o más y sale en el mapa como ciudad."), "ine_padron"),
         ...countyKeys.map((k) => field(k)),
       ].filter(Boolean),
       highlight: (rows) => {
@@ -444,25 +445,25 @@ const times = (x) => `×${x.toFixed(2).replace(".", ",")}`;
 function extendDistricts(data, d) {
   const { states, metros, counties } = data.levels;
   const cat = new Map((d.catalog || []).map((c) => [c.id, c]));
-  const vint = d.vintage || "IGE, unidades locales";
+  const vint = d.vintage || t("IGE, unidades locales");
   const rule = d.rule?.text || "";
-  const names = (ids) => ids.map((id) => cat.get(id)?.name || id).join(", ") || "Ninguno";
-  const F = (key, label, format, o = {}) => makeField(key, label, format, { source: "ige_unidades", group: "Distritos", ...o });
-  const units = () => F("units", "Establecimientos", "int", { unit: "unidades locales", description: `Establecimientos (unidades locales) con sede en el territorio (${vint}). No son empleos.` });
-  const districts = () => F("districts", "Distritos", "text", { description: `Distritos de actividad que cumple, del más fuerte al menos. Cuentan establecimientos. ${rule}` });
-  const count = () => F("n_districts", "Número de distritos", "int", { description: `Cuántos distritos cumplen la regla${d.rule?.max_per_city ? ` (hasta ${d.rule.max_per_city})` : ""}.` });
+  const names = (ids) => ids.map((id) => cat.get(id)?.name || id).join(", ") || t("Ninguno");
+  const F = (key, label, format, o = {}) => makeField(key, label, format, { source: "ige_unidades", group: t("Distritos"), ...o });
+  const units = () => F("units", t("Establecimientos"), "int", { unit: t("unidades locales"), description: t("Establecimientos (unidades locales) con sede en el territorio ({vint}). No son empleos.", { vint }) });
+  const districts = () => F("districts", t("Distritos"), "text", { description: t("Distritos de actividad que cumple, del más fuerte al menos. Cuentan establecimientos. {rule}", { rule }) });
+  const count = () => F("n_districts", t("Número de distritos"), "int", { description: d.rule?.max_per_city ? t("Cuántos distritos cumplen la regla (hasta {max}).", { max: d.rule.max_per_city }) : t("Cuántos distritos cumplen la regla.") });
 
   metros.addFields([
-    F("city_type", "Tipo de ciudad", "text", { description: `Sale de su distrito principal; sin ningún distrito, la ciudad es diversificada. ${rule}` }),
+    F("city_type", t("Tipo de ciudad"), "text", { description: t("Sale de su distrito principal; sin ningún distrito, la ciudad es diversificada. {rule}", { rule }) }),
     districts(), count(), units(),
-    F("top_activity", "Actividad más especializada", "text", { description: "La actividad (división de la CNAE-09) con mayor cociente de localización entre las destacadas de la ciudad." }),
-    F("top_lq", "Su cociente de localización", "lq", { unit: "× la parte de Galicia", description: "Parte de los establecimientos de la ciudad en esa actividad entre la misma parte en Galicia." }),
+    F("top_activity", t("Actividad más especializada"), "text", { description: t("La actividad (división de la CNAE-09) con mayor cociente de localización entre las destacadas de la ciudad.") }),
+    F("top_lq", t("Su cociente de localización"), "lq", { unit: t("× la parte de Galicia"), description: t("Parte de los establecimientos de la ciudad en esa actividad entre la misma parte en Galicia.") }),
   ]);
   for (const r of metros.rows) {
     const c = d.cities?.[r.key];
     const top = c?.top?.[0];
     Object.assign(r.v, {
-      city_type: c ? c.badge?.label ?? (c.districts?.length ? null : "Ciudad diversificada") : null,
+      city_type: c ? c.badge?.label ?? (c.districts?.length ? null : t("Ciudad diversificada")) : null,
       districts: c ? names((c.districts || []).map((x) => x.id)) : null,
       n_districts: c ? (c.districts || []).length : null,
       units: c?.units ?? null,
@@ -487,10 +488,10 @@ function extendDistricts(data, d) {
 // Citizens: every category of each row, as a share (the City view draws the same mix as person figures). Higher
 // education and the mean age are already columns of the concello table.
 const CITIZEN_ROWS = {
-  workforce: { group: "Ciudadanos: ocupación", source: "ige_censo", unit: "parte de las personas ocupadas" },
-  age: { group: "Ciudadanos: edad", source: "ige_poboacion", unit: "parte de la población" },
-  education: { group: "Ciudadanos: estudios", source: "ige_censo", unit: "parte de las personas de 15 años o más" },
-  nativity: { group: "Ciudadanos: origen", source: "ige_poboacion", unit: "parte de la población" },
+  workforce: { group: t("Ciudadanos: ocupación"), source: "ige_censo", unit: t("parte de las personas ocupadas") },
+  age: { group: t("Ciudadanos: edad"), source: "ige_poboacion", unit: t("parte de la población") },
+  education: { group: t("Ciudadanos: estudios"), source: "ige_censo", unit: t("parte de las personas de 15 años o más") },
+  nativity: { group: t("Ciudadanos: origen"), source: "ige_poboacion", unit: t("parte de la población") },
 };
 
 function extendCitizens(data, cz) {
@@ -500,13 +501,13 @@ function extendCitizens(data, cz) {
   const label = new Map(Object.entries(cz.groups || {}).flatMap(([row, list]) => list.map((g) => [`${row}.${g.key}`, g.label])));
   metros.addFields([
     ...cols.map(({ row, g, meta }) => makeField(`cz_${g.key}`, g.label, "pct", {
-      unit: meta.unit, source: meta.source, group: meta.group, description: `${g.label}. ${cz.rows?.[row] || ""}.`,
+      unit: meta.unit, source: meta.source, group: meta.group, description: t("{label}. {rows}.", { label: g.label, rows: cz.rows?.[row] || "" }),
     })),
-    makeField("cz_foreign_nationals", "Nacionalidad extranjera", "pct", {
-      unit: "parte de la población", source: "ige_poboacion", group: "Ciudadanos: origen", description: "Habitantes con nacionalidad extranjera (IGE, padrón de 2025).",
+    makeField("cz_foreign_nationals", t("Nacionalidad extranjera"), "pct", {
+      unit: t("parte de la población"), source: "ige_poboacion", group: t("Ciudadanos: origen"), description: t("Habitantes con nacionalidad extranjera (IGE, padrón de 2025)."),
     }),
-    makeField("cz_specialist", "Categoría que más destaca", "text", {
-      source: "ige_censo", group: "Ciudadanos: ocupación", description: `La categoría de ciudadanos con más peso frente al de Galicia. ${cz.rule?.text || ""}`,
+    makeField("cz_specialist", t("Categoría que más destaca"), "text", {
+      source: "ige_censo", group: t("Ciudadanos: ocupación"), description: t("La categoría de ciudadanos con más peso frente al de Galicia. {rule}", { rule: cz.rule?.text || "" }),
     }),
   ]);
   const values = (c) => ({

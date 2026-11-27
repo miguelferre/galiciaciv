@@ -2,6 +2,7 @@ import { css } from "../color.js";
 import { esc, popShort } from "../format.js";
 import { isCapital, stateIndex } from "../world.js";
 import { yieldGrid, amenities, industries, gdpRow, popLine, growthSpan, showPanel } from "./infoPanel.js";
+import { t } from "../i18n.js";
 
 /**
  * Opens the panel for state `idx` (index into world.json states / states.json).
@@ -15,7 +16,7 @@ export function openStatePanel(idx, ctx) {
   let st = ctx.states?.[idx];
   if (st && geo.fips && st.fips && st.fips !== geo.fips) st = ctx.states.find((s) => s.fips === geo.fips);
   st = st || { ...geo };
-  const name = st.name || geo.name || "Comarca";
+  const name = st.name || geo.name || t("Comarca");
   const abbr = st.abbr || geo.abbr || "";
   const count = ctx.states?.length || w.raw.states.length;
 
@@ -29,23 +30,23 @@ export function openStatePanel(idx, ctx) {
             <span class="cr-pop">${popShort(c.population)}</span><span class="cr-go" aria-hidden="true">›</span></button>`;
         })
         .join("")}</div>`
-    : `<p class="muted">No hay ciudades en los datos de esta comarca.</p>`;
+    : `<p class="muted">${t("No hay ciudades en los datos de esta comarca.")}</p>`;
 
   const hasEcon = st.population != null || st.yields;
   showPanel({
     kind: "state",
     stripe: css(w.stateColor[idx] || [190, 190, 190]),
     title: name,
-    sub: `Comarca${abbr && abbr !== name ? ` · ${esc(abbr)}` : ""}${geo.fips ? ` · Código ${esc(geo.fips)}` : ""}`,
+    sub: `${t("Comarca")}${abbr && abbr !== name ? ` · ${esc(abbr)}` : ""}${geo.fips ? ` · ${t("Código {c}", { c: esc(geo.fips) })}` : ""}`,
     headExtra: hasEcon ? popLine(st, growthSpan(st, n)) : "",
     sections: [
-      st.yields && { title: "Rendimientos · puesto entre comarcas", html: `<div class="yield-grid">${yieldGrid(nation, st.yields, st.ranks, count)}</div>` },
-      hasEcon && { title: "Paro, renta y PIB", html: amenities(st, n) + gdpRow(st) },
-      st.jobs && { title: "Principales sectores · dónde trabaja la gente", html: industries(st, nation, 8) },
-      { title: "Ciudades más grandes", html: cityRows },
-      !hasEcon && { title: "Datos", html: `<p class="muted">Las estadísticas de la comarca no están en esta versión de los datos (falta states.json).</p>` },
+      st.yields && { title: t("Rendimientos · puesto entre comarcas"), html: `<div class="yield-grid">${yieldGrid(nation, st.yields, st.ranks, count)}</div>` },
+      hasEcon && { title: t("Paro, renta y PIB"), html: amenities(st, n) + gdpRow(st) },
+      st.jobs && { title: t("Principales sectores · dónde trabaja la gente"), html: industries(st, nation, 8) },
+      { title: t("Ciudades más grandes"), html: cityRows },
+      !hasEcon && { title: t("Datos"), html: `<p class="muted">${t("Las estadísticas de la comarca no están en esta versión de los datos (falta states.json).")}</p>` },
     ],
-    foot: `Fuente: ${esc(nation.vintage)}${nation.gdp_vintage ? `; PIB: ${esc(nation.gdp_vintage)}` : ""}. Los puestos son entre las ${count} comarcas del mapa (1 = la mayor).`,
+    foot: `${t("Fuente: {v}", { v: esc(nation.vintage) })}${nation.gdp_vintage ? `; ${t("PIB: {v}", { v: esc(nation.gdp_vintage) })}` : ""}. ${t("Los puestos son entre las {n} comarcas del mapa (1 = la mayor).", { n: count })}`,
     onClose: ctx.onClose,
     onPedia: ctx.onPedia,
     wire(panel) {

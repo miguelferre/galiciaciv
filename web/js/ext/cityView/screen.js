@@ -11,14 +11,15 @@ import { meter, bar } from "./charts.js";
 import { rankCount, resourceValue, LAND } from "./model.js";
 import { citizensHtml, mountCitizens } from "./citizens.js";
 import { badgeHtml, cityDistricts, districtsHtml } from "./districts.js";
+import { t } from "../../i18n.js";
 
 const TABS = [
-  ["citizens", "Ciudadanos", "pop"],
-  ["districts", "Distritos", "l-developed"],
-  ["economy", "Economía", "y-gold"],
-  ["workforce", "Trabajo", "y-production"],
-  ["resources", "Recursos", "resources"],
-  ["compare", "Comparar", "layers"],
+  ["citizens", t("Ciudadanos"), "pop"],
+  ["districts", t("Distritos"), "l-developed"],
+  ["economy", t("Economía"), "y-gold"],
+  ["workforce", t("Trabajo"), "y-production"],
+  ["resources", t("Recursos"), "resources"],
+  ["compare", t("Comparar"), "layers"],
 ];
 
 const rankCache = new WeakMap();
@@ -33,13 +34,13 @@ function countOf(cities, key) {
 function rankBadge(rank, of, label) {
   if (rank == null) return "";
   const tier = rank <= 5 ? "gold" : rank <= 15 ? "silver" : "bronze";
-  return `<div class="cv-rank ${tier}" title="${esc(`${label}: puesto ${rank} de ${of} ciudades (1 = el valor más alto)`)}">
+  return `<div class="cv-rank ${tier}" title="${esc(t("{label}: puesto {rank} de {of} ciudades (1 = el valor más alto)", { label, rank, of }))}">
     <span class="cv-medal">${rank}.º</span><span class="cv-rank-l">${esc(label)}</span></div>`;
 }
 
 function lqBadge(lq) {
   if (lq == null) return "";
-  const tip = `Cociente de localización: el peso de este sector es ${num(lq, 2)} veces el de Galicia`;
+  const tip = t("Cociente de localización: el peso de este sector es {n} veces el de Galicia", { n: num(lq, 2) });
   const cls = lq >= 1.25 ? "hi" : lq <= 0.75 ? "lo" : "mid";
   return `<span class="cv-lq ${cls}" title="${esc(tip)}">×${num(lq)}</span>`;
 }
@@ -56,7 +57,7 @@ function header(m) {
   const cities = m.cityList;
   const col = css(m.stateRGB);
   const chips = m.states.map((s) => (s.index >= 0
-    ? `<button class="chip" data-state="${s.index}" title="Abrir ${esc(s.name)}">${esc(s.name)}</button>`
+    ? `<button class="chip" data-state="${s.index}" title="${t("Abrir {name}", { name: esc(s.name) })}">${esc(s.name)}</button>`
     : `<span class="chip">${esc(s.name)}</span>`)).join("");
   const perCap = perCapita(c);
   const r = c.ranks || {};
@@ -65,29 +66,29 @@ function header(m) {
   <div class="sheet-grip cv-grip" aria-hidden="true"></div>
   <header class="cv-head" style="--sc:${col}">
     <div class="cv-ribbon" aria-hidden="true"></div>
-    <button class="icon-btn cv-close" data-close aria-label="Cerrar la vista de ciudad (Esc)" title="Volver al mapa (Esc)">${icon("close", "✕", { size: 13 })}</button>
-    <div class="cv-kind">Vista de ciudad · Concello</div>
+    <button class="icon-btn cv-close" data-close aria-label="${t("Cerrar la vista de ciudad (Esc)")}" title="${t("Volver al mapa (Esc)")}">${icon("close", "✕", { size: 13 })}</button>
+    <div class="cv-kind">${t("Vista de ciudad · Concello")}</div>
     <div class="cv-title">
       <div class="cv-crest" aria-hidden="true"><span>${esc(popShort(c.population))}</span></div>
       <div class="cv-tt">
-        <h2 class="cv-name" tabindex="-1">${isCapital(c) ? `<span class="cv-cap" title="Capital de Galicia">★</span> ` : ""}${esc(c.name)}</h2>
+        <h2 class="cv-name" tabindex="-1">${isCapital(c) ? `<span class="cv-cap" title="${t("Capital de Galicia")}">★</span> ` : ""}${esc(c.name)}</h2>
         <div class="cv-full">${esc(c.full || "")}</div>
         <div class="cv-typeslot" data-ctype></div>
         ${chips ? `<div class="chips">${chips}</div>` : ""}
       </div>
     </div>
     <div class="cv-headline">
-      <div class="cv-big"><span class="lbl">${icon("pop", "👥", { size: 13 })} Población${m.nation.year ? ` ${m.nation.year}` : ""}</span><b>${int(c.population)}</b></div>
-      <div class="cv-big"><span class="lbl">${icon("y-gold", "💰", { size: 13 })} PIB${c.gdp_year ? ` ${c.gdp_year}` : ""}</span><b>${money(c.gdp)}</b>${
-        perCap != null ? `<span class="cv-sub">${euros(perCap)} por habitante</span>` : ""}</div>
+      <div class="cv-big"><span class="lbl">${icon("pop", "👥", { size: 13 })} ${t("Población")}${m.nation.year ? ` ${m.nation.year}` : ""}</span><b>${int(c.population)}</b></div>
+      <div class="cv-big"><span class="lbl">${icon("y-gold", "💰", { size: 13 })} ${t("PIB")}${c.gdp_year ? ` ${c.gdp_year}` : ""}</span><b>${money(c.gdp)}</b>${
+        perCap != null ? `<span class="cv-sub">${t("{v} por habitante", { v: euros(perCap) })}</span>` : ""}</div>
     </div>
-    <div class="cv-ranks" aria-label="Puestos entre las ${cities.length} ciudades del mapa">
-      ${rankBadge(r.population, N("population"), "Población")}
-      ${rankBadge(r.gdp, N("gdp"), "PIB")}
-      ${rankBadge(r.gdp_per_capita, N("gdp_per_capita"), "PIB por habitante")}
+    <div class="cv-ranks" aria-label="${t("Puestos entre las {n} ciudades del mapa", { n: cities.length })}">
+      ${rankBadge(r.population, N("population"), t("Población"))}
+      ${rankBadge(r.gdp, N("gdp"), t("PIB"))}
+      ${rankBadge(r.gdp_per_capita, N("gdp_per_capita"), t("PIB por habitante"))}
     </div>
   </header>
-  <nav class="cv-tabs" aria-label="Secciones de la vista de ciudad">
+  <nav class="cv-tabs" aria-label="${t("Secciones de la vista de ciudad")}">
     ${TABS.map(([id, label, ic]) => `<button type="button" data-tab="${id}">${icon(ic, "•", { size: 14 })}<span>${label}</span></button>`).join("")}
   </nav>`;
 }
@@ -96,7 +97,7 @@ function header(m) {
 function citizens(m) {
   const c = m.city, n = m.nation.nation;
   // sub: the small line beside the value; by default the Galicia value, left out when there is none.
-  const row = (ic, fb, label, v, ref, fmt, better, max, sub = ref != null ? `Galicia ${fmt(ref)}` : "", tick = ref) => (v == null ? "" : `
+  const row = (ic, fb, label, v, ref, fmt, better, max, sub = ref != null ? t("Galicia {v}", { v: fmt(ref) }) : "", tick = ref) => (v == null ? "" : `
     <div class="cv-stat">
       <div class="cv-stat-top"><span class="sl">${icon(ic, fb, { size: 14 })}${esc(label)}</span>
         <span class="sv"><b>${fmt(v)}</b>${sub ? `<small>${sub}</small>` : ""}</span></div>
@@ -106,43 +107,44 @@ function citizens(m) {
   const empShare = c.employed != null && c.population > 0 ? c.employed / c.population : null;
   const refEmpShare = n.employed != null && n.population > 0 ? n.employed / n.population : null;
   const empSub = empShare == null ? ""
-    : `${pct(empShare)} de los habitantes${refEmpShare != null ? ` · Galicia ${pct(refEmpShare)}` : ""}`;
-  const tilesNote = `En el mapa, algunas casillas del concello con suelo urbanizado muestran <b>≈ habitantes</b> (la población del concello repartida según la superficie de cada casilla: una estimación, no un recuento) y su <b>cobertura del suelo principal</b> (parte de la casilla)${
-    m.residentsSum > 0 ? `. Con ese reparto, las ${int(m.tiles.length)} casillas suman unos ${compact(m.residentsSum)} habitantes` : ""}.`;
+    : `${t("{p} de los habitantes", { p: pct(empShare) })}${refEmpShare != null ? ` · ${t("Galicia {v}", { v: pct(refEmpShare) })}` : ""}`;
+  const tilesNote = m.residentsSum > 0
+    ? t("En el mapa, algunas casillas del concello con suelo urbanizado muestran <b>≈ habitantes</b> (la población del concello repartida según la superficie de cada casilla: una estimación, no un recuento) y su <b>cobertura del suelo principal</b> (parte de la casilla). Con ese reparto, las {n} casillas suman unos {v} habitantes.", { n: int(m.tiles.length), v: compact(m.residentsSum) })
+    : t("En el mapa, algunas casillas del concello con suelo urbanizado muestran <b>≈ habitantes</b> (la población del concello repartida según la superficie de cada casilla: una estimación, no un recuento) y su <b>cobertura del suelo principal</b> (parte de la casilla).");
   return `
   <section class="cv-sec" id="cv-citizens" data-sec="citizens" aria-labelledby="cv-h-citizens">
-    <h3 id="cv-h-citizens">${icon("pop", "👥", { size: 15 })}Ciudadanos</h3>
+    <h3 id="cv-h-citizens">${icon("pop", "👥", { size: 15 })}${t("Ciudadanos")}</h3>
     <div class="cv-citizens" data-citizens>${citizensHtml(m, undefined)}</div>
-    <h4 class="cv-h4">Empleo y renta</h4>
+    <h4 class="cv-h4">${t("Empleo y renta")}</h4>
     <div class="cv-stats">
-      ${row("pop", "👥", "Personas afiliadas que viven aquí", c.employed, null, int, null, c.population, empSub, refEmpShare != null ? refEmpShare * c.population : null)}
-      ${row("unemployment", "😐", "Parados por habitante", c.unemployment, n.unemployment, (x) => pct(x), "low")}
-      ${row("l-income", "💶", "Renta neta media por persona (2024)", c.median_income, n.median_income, euros, "high")}
+      ${row("pop", "👥", t("Personas afiliadas que viven aquí"), c.employed, null, int, null, c.population, empSub, refEmpShare != null ? refEmpShare * c.population : null)}
+      ${row("unemployment", "😐", t("Parados por habitante"), c.unemployment, n.unemployment, (x) => pct(x), "low")}
+      ${row("l-income", "💶", t("Renta neta media por persona (2024)"), c.median_income, n.median_income, euros, "high")}
     </div>
-    <p class="cv-note">Parados por habitante: paro registrado entre la población. No es la tasa de paro.</p>
+    <p class="cv-note">${t("Parados por habitante: paro registrado entre la población. No es la tasa de paro.")}</p>
     <div class="cv-legend-tiles">${tileLegend(m)}<p>${tilesNote}</p></div>
-    <h4 class="cv-h4">El concello</h4>
-    <div data-concello><p class="muted cv-note">Cargando los datos del concello…</p></div>
+    <h4 class="cv-h4">${t("El concello")}</h4>
+    <div data-concello><p class="muted cv-note">${t("Cargando los datos del concello…")}</p></div>
   </section>`;
 }
 
 function tileLegend(m) {
   const counts = new Map();
-  for (const t of m.tiles) if (t.land) counts.set(t.land.key, (counts.get(t.land.key) || 0) + 1);
+  for (const tl of m.tiles) if (tl.land) counts.set(tl.land.key, (counts.get(tl.land.key) || 0) + 1);
   return `<div class="cv-tl">${LAND.filter((g) => counts.has(g.key)).map((g) =>
-    `<span class="cv-tl-i" title="Casillas donde es la cobertura principal"><i style="background:${esc(m.landColor(g.key))}"></i>${esc(g.label)} <small>${counts.get(g.key)}</small></span>`).join("")}</div>`;
+    `<span class="cv-tl-i" title="${t("Casillas donde es la cobertura principal")}"><i style="background:${esc(m.landColor(g.key))}"></i>${esc(g.label)} <small>${counts.get(g.key)}</small></span>`).join("")}</div>`;
 }
 
 // The concello's own figures that nothing else on the screen shows (counties.json column → format).
 const CONCELLO = [
   ["land_km2", (v) => `${num(v)} km²`],
-  ["density", (v) => `${int(v)} hab./km²`],
+  ["density", (v) => `${int(v)} ${t("hab./km²")}`],
   ["gini", (v) => num(v)],
   ["nacidos_fuera", (v) => pct(v)],
 ];
 
 export function concelloStats(m, data) {
-  const none = `<p class="muted cv-note">Los datos del concello no están disponibles.</p>`;
+  const none = `<p class="muted cv-note">${t("Los datos del concello no están disponibles.")}</p>`;
   if (!data || !Array.isArray(data.rows)) return none;
   const col = Object.fromEntries(data.columns.map((k, j) => [k, j]));
   const r = data.rows.find((x) => x[col.geoid] === m.city.id);
@@ -153,14 +155,14 @@ export function concelloStats(m, data) {
     return `<div title="${esc(f.description || "")}"><span class="lbl">${esc(f.label || k)}</span><b>${esc(fmt(r[col[k]]))}</b></div>`;
   }).join("");
   return `<div class="cv-cdata">${cells}</div>
-    <p class="cv-note">${esc(data.vintage || "")}. Pasa por cada dato para ver su definición.</p>`;
+    <p class="cv-note">${esc(data.vintage || "")}. ${t("Pasa por cada dato para ver su definición.")}</p>`;
 }
 
 // --- districts -----------------------------------------------------------------------------------------------------
 function districts(m) {
   return `
   <section class="cv-sec" id="cv-districts" data-sec="districts" aria-labelledby="cv-h-districts">
-    <h3 id="cv-h-districts">${icon("l-developed", "🏙", { size: 15 })}Distritos</h3>
+    <h3 id="cv-h-districts">${icon("l-developed", "🏙", { size: 15 })}${t("Distritos")}</h3>
     <div data-districts>${districtsHtml(m, undefined)}</div>
   </section>`;
 }
@@ -177,21 +179,21 @@ function economy(m) {
     const rk = r[y.key];
     return `<div class="cv-yield" style="--yc:${esc(y.color)}" title="${esc(y.label)}: ${esc(y.description || "")}">
       <div class="ico">${glyph(y, 20)}</div><div class="val">${yieldValue(y, v)}</div>
-      <div class="lbl">${esc(y.key === "gold" ? "PIB" : y.label)}</div>
-      ${rk != null ? `<div class="rk">${rk}.º <small>de ${countOf(cities, y.key)}</small></div>` : ""}</div>`;
+      <div class="lbl">${esc(y.key === "gold" ? t("PIB") : y.label)}</div>
+      ${rk != null ? `<div class="rk">${rk}.º <small>${t("de {n}", { n: countOf(cities, y.key) })}</small></div>` : ""}</div>`;
   }).join("");
   return `
   <section class="cv-sec" id="cv-economy" data-sec="economy" aria-labelledby="cv-h-economy">
-    <h3 id="cv-h-economy">${icon("y-gold", "💰", { size: 15 })}Economía</h3>
+    <h3 id="cv-h-economy">${icon("y-gold", "💰", { size: 15 })}${t("Economía")}</h3>
     <div class="cv-gdp">
-      <div><span class="lbl">PIB${c.gdp_year ? ` (${c.gdp_year})` : ""}</span><b>${money(c.gdp)}</b>${r.gdp != null ? `<small>${r.gdp}.º de ${countOf(cities, "gdp")} ciudades</small>` : ""}</div>
-      <div><span class="lbl">PIB por habitante</span><b>${euros(perCap)}</b>${
-        refPerCap && perCap != null ? `<small class="${perCap >= refPerCap ? "good" : "bad"}">Galicia ${euros(refPerCap)}</small>` : ""}</div>
-      <div><span class="lbl">Parte del PIB gallego</span><b>${c.gdp != null && n.gdp ? pct(c.gdp / n.gdp, 1) : "–"}</b><small>${pct(c.population / n.population, 1)} de la población</small></div>
+      <div><span class="lbl">${t("PIB")}${c.gdp_year ? ` (${c.gdp_year})` : ""}</span><b>${money(c.gdp)}</b>${r.gdp != null ? `<small>${t("{rank}.º de {n} ciudades", { rank: r.gdp, n: countOf(cities, "gdp") })}</small>` : ""}</div>
+      <div><span class="lbl">${t("PIB por habitante")}</span><b>${euros(perCap)}</b>${
+        refPerCap && perCap != null ? `<small class="${perCap >= refPerCap ? "good" : "bad"}">${t("Galicia {v}", { v: euros(refPerCap) })}</small>` : ""}</div>
+      <div><span class="lbl">${t("Parte del PIB gallego")}</span><b>${c.gdp != null && n.gdp ? pct(c.gdp / n.gdp, 1) : "–"}</b><small>${t("{p} de la población", { p: pct(c.population / n.population, 1) })}</small></div>
     </div>
-    <h4 class="cv-h4">Rendimientos <span class="muted">puesto entre las ciudades</span></h4>
+    <h4 class="cv-h4">${t("Rendimientos")} <span class="muted">${t("puesto entre las ciudades")}</span></h4>
     <div class="cv-yields">${yields}</div>
-    <p class="cv-note">${esc(nat.gdp_vintage || "IGE, PIB por concello")}, en euros corrientes. PIB por habitante: PIB de ${esc(String(c.gdp_year || ""))} entre la población de ${esc(String(nat.year || ""))}. Alimento y Producción cuentan personas afiliadas que viven en el concello; Ciencia y Cultura son estimaciones. Pasa por cada rendimiento para ver su definición.</p>
+    <p class="cv-note">${t("{vintage}, en euros corrientes. PIB por habitante: PIB de {gy} entre la población de {py}. Alimento y Producción cuentan personas afiliadas que viven en el concello; Ciencia y Cultura son estimaciones. Pasa por cada rendimiento para ver su definición.", { vintage: esc(nat.gdp_vintage || t("IGE, PIB por concello")), gy: esc(String(c.gdp_year || "")), py: esc(String(nat.year || "")) })}</p>
   </section>`;
 }
 
@@ -199,7 +201,7 @@ function economy(m) {
 function workforce(m) {
   const cards = m.inds.map((d) => {
     const spec = d.lq != null && d.lq >= 1.25;
-    return `<div class="cv-bld${spec ? " spec" : ""}" title="${esc(d.label)}: ${int(d.jobs)} personas afiliadas que viven aquí (${pct(d.share)}; Galicia ${pct(d.natShare)})">
+    return `<div class="cv-bld${spec ? " spec" : ""}" title="${esc(t("{label}: {n} personas afiliadas que viven aquí ({p}; Galicia {g})", { label: d.label, n: int(d.jobs), p: pct(d.share), g: pct(d.natShare) }))}">
       ${medallion(d.icon, "•", d.color, 17)}
       <div class="cv-bld-t"><span class="cv-bld-n">${esc(d.label)}</span>
         <span class="cv-bld-v">${compact(d.jobs)} <small>${pct(d.share, 1)}</small></span></div>
@@ -208,34 +210,34 @@ function workforce(m) {
   }).join("");
   return `
   <section class="cv-sec" id="cv-workforce" data-sec="workforce" aria-labelledby="cv-h-workforce">
-    <h3 id="cv-h-workforce">${icon("y-production", "⚙️", { size: 15 })}Trabajo</h3>
-    <p class="cv-lead">Sectores en los que trabajan las ${int(m.city.employed)} personas afiliadas a la Seguridad Social que viven en el concello. <span class="cv-lq hi">×N</span> compara el peso de cada sector con el que tiene en Galicia.</p>
-    <div class="cv-blds">${cards || `<p class="muted cv-note">Sin datos de sectores.</p>`}</div>
-    <p class="cv-note">IGE, afiliaciones por concello de residencia y sector (no donde está el puesto de trabajo). Los distritos del mapa salen de otra fuente, los establecimientos del directorio de empresas del IGE: ver Distritos.</p>
+    <h3 id="cv-h-workforce">${icon("y-production", "⚙️", { size: 15 })}${t("Trabajo")}</h3>
+    <p class="cv-lead">${t("Sectores en los que trabajan las {n} personas afiliadas a la Seguridad Social que viven en el concello. {lq} compara el peso de cada sector con el que tiene en Galicia.", { n: int(m.city.employed), lq: `<span class="cv-lq hi">×N</span>` })}</p>
+    <div class="cv-blds">${cards || `<p class="muted cv-note">${t("Sin datos de sectores.")}</p>`}</div>
+    <p class="cv-note">${t("IGE, afiliaciones por concello de residencia y sector (no donde está el puesto de trabajo). Los distritos del mapa salen de otra fuente, los establecimientos del directorio de empresas del IGE: ver Distritos.")}</p>
   </section>`;
 }
 
 // --- resources -----------------------------------------------------------------------------------------------------
 function resources(m) {
   const list = m.sites.map((s, k) => {
-    const t = s.type;
-    const val = resourceValue(s.item, t, compact);
-    return `<button type="button" class="cv-site" data-site="${k}" title="Ir a ${esc(s.item.name)}">
-      <span class="cv-med" style="--bg:${esc(t?.color || "#3a4a5e")}">${glyph(t, 16)}</span>
-      <span class="cv-site-t"><b>${esc(s.item.name)}</b><small>${esc(t?.name || s.item.type)}</small>
+    const ty = s.type;
+    const val = resourceValue(s.item, ty, compact);
+    return `<button type="button" class="cv-site" data-site="${k}" title="${t("Ir a {name}", { name: esc(s.item.name) })}">
+      <span class="cv-med" style="--bg:${esc(ty?.color || "#3a4a5e")}">${glyph(ty, 16)}</span>
+      <span class="cv-site-t"><b>${esc(s.item.name)}</b><small>${esc(ty?.name || s.item.type)}</small>
         ${s.item.detail ? `<small class="cv-site-d">${esc(s.item.detail)}</small>` : ""}</span>
       <span class="cv-site-v">${esc(val)}<i aria-hidden="true">›</i></span>
     </button>`;
   }).join("");
   const turbines = m.sites.filter((s) => s.item.type === "eolico").reduce((a, s) => a + (s.item.value || 0), 0);
-  const threshold = "El mapa solo muestra los sitios que superan el umbral de cada tipo: no es el total del concello.";
+  const threshold = t("El mapa solo muestra los sitios que superan el umbral de cada tipo: no es el total del concello.");
   const summary = m.sites.length
-    ? `<p class="cv-lead">${m.sites.length} ${m.sites.length === 1 ? "sitio" : "sitios"} en el mapa${
-      turbines ? ` · ${int(turbines)} aerogeneradores (en funcionamiento, autorizados o en obras)` : ""}. Pulsa uno para ir allí.</p>`
-    : `<p class="muted cv-note">No hay recursos del mapa en este concello. ${threshold}</p>`;
+    ? `<p class="cv-lead">${m.sites.length === 1 ? t("{n} sitio en el mapa", { n: m.sites.length }) : t("{n} sitios en el mapa", { n: m.sites.length })}${
+      turbines ? ` · ${t("{n} aerogeneradores (en funcionamiento, autorizados o en obras)", { n: int(turbines) })}` : ""}. ${t("Pulsa uno para ir allí.")}</p>`
+    : `<p class="muted cv-note">${t("No hay recursos del mapa en este concello.")} ${threshold}</p>`;
   return `
   <section class="cv-sec" id="cv-resources" data-sec="resources" aria-labelledby="cv-h-resources">
-    <h3 id="cv-h-resources">${icon("resources", "⛏️", { size: 15 })}Recursos</h3>
+    <h3 id="cv-h-resources">${icon("resources", "⛏️", { size: 15 })}${t("Recursos")}</h3>
     ${summary}
     <div class="cv-sites">${list}</div>
     ${m.sites.length ? `<p class="cv-note">${threshold}</p>` : ""}
@@ -244,20 +246,20 @@ function resources(m) {
 
 // --- compare -------------------------------------------------------------------------------------------------------
 const COMPARE = [
-  ["Población", (c) => c.population, popShort],
-  ["PIB / hab.", perCapita, euros],
-  ["Renta / pers.", (c) => c.median_income, euros],
-  ["Parados / hab.", (c) => c.unemployment, (v) => pct(v)],
+  [t("Población"), (c) => c.population, popShort],
+  [t("PIB / hab."), perCapita, euros],
+  [t("Renta / pers."), (c) => c.median_income, euros],
+  [t("Parados / hab."), (c) => c.unemployment, (v) => pct(v)],
 ];
 
 export function compareTable(m) {
   const rows = [m.city, ...m.peers];
   const cols = COMPARE.filter(([, f]) => rows.some((c) => f(c) != null));
   const max = cols.map(([, f]) => Math.max(...rows.map((c) => Math.abs(f(c) ?? 0))) || 1);
-  return `<div class="cv-cmp" role="table" aria-label="${esc(m.city.name)} y ciudades parecidas">
-    <div class="cv-cmp-r cv-cmp-h" role="row"><span role="columnheader">Ciudad</span>${cols.map(([l]) => `<span role="columnheader">${esc(l)}</span>`).join("")}</div>
+  return `<div class="cv-cmp" role="table" aria-label="${t("{name} y ciudades parecidas", { name: esc(m.city.name) })}">
+    <div class="cv-cmp-r cv-cmp-h" role="row"><span role="columnheader">${t("Ciudad")}</span>${cols.map(([l]) => `<span role="columnheader">${esc(l)}</span>`).join("")}</div>
     ${rows.map((c, k) => `<div class="cv-cmp-r${k === 0 ? " me" : ""}" role="row">
-      <span role="cell">${k === 0 ? `<b class="cv-cmp-n">${esc(c.name)}</b>` : `<button type="button" class="cv-cmp-n" data-peer="${esc(c.id)}" title="Abrir ${esc(c.name)} en la vista de ciudad">${esc(c.name)}</button>`}<small>${esc(m.comarcaOf(c))}</small></span>
+      <span role="cell">${k === 0 ? `<b class="cv-cmp-n">${esc(c.name)}</b>` : `<button type="button" class="cv-cmp-n" data-peer="${esc(c.id)}" title="${t("Abrir {name} en la vista de ciudad", { name: esc(c.name) })}">${esc(c.name)}</button>`}<small>${esc(m.comarcaOf(c))}</small></span>
       ${cols.map(([, f, fmt], j) => {
         const v = f(c);
         return `<span role="cell"><em>${v == null ? "–" : esc(fmt(v))}</em>${bar(v == null ? 0 : Math.abs(v) / max[j], k === 0 ? "#ecd08e" : "#8fa6bd")}</span>`;
@@ -269,17 +271,17 @@ export function compareTable(m) {
 function compare(m) {
   return `
   <section class="cv-sec" id="cv-compare" data-sec="compare" aria-labelledby="cv-h-compare">
-    <h3 id="cv-h-compare">${icon("layers", "⚖️", { size: 15 })}Comparar</h3>
-    <p class="cv-lead">Las ${m.peers.length} ciudades de población más parecida. Pulsa una para abrirla.</p>
+    <h3 id="cv-h-compare">${icon("layers", "⚖️", { size: 15 })}${t("Comparar")}</h3>
+    <p class="cv-lead">${t("Las {n} ciudades de población más parecida. Pulsa una para abrirla.", { n: m.peers.length })}</p>
     <div data-compare>${compareTable(m)}</div>
-    <p class="cv-note">Población de ${esc(String(m.nation.year || ""))}. PIB por habitante: PIB de ${esc(String(m.city.gdp_year || ""))} entre esa población. Renta neta media por persona de 2024. Parados registrados por habitante (no es la tasa de paro).</p>
+    <p class="cv-note">${t("Población de {py}. PIB por habitante: PIB de {gy} entre esa población. Renta neta media por persona de 2024. Parados registrados por habitante (no es la tasa de paro).", { py: esc(String(m.nation.year || "")), gy: esc(String(m.city.gdp_year || "")) })}</p>
   </section>`;
 }
 
 function footer(m) {
   const nat = m.nation;
-  return `<div class="cv-foot">Fuentes: ${esc(nat.vintage)}${nat.gdp_vintage ? `; PIB: ${esc(nat.gdp_vintage)}` : ""}; ciudadanos: IGE, padrón y Censo 2021; distritos: IGE, directorio de empresas; recursos: Xunta de Galicia (parques eólicos), IGME (canteras y minas) y Pesca de Galicia (lonjas); cobertura del suelo: ESA WorldCover 2021. Los puestos son entre las ${m.cityList.length} ciudades del mapa.
-    <a href="#" data-pedia>Almanaque ›</a></div>`;
+  return `<div class="cv-foot">${t("Fuentes: {vintage}; ciudadanos: IGE, padrón y Censo 2021; distritos: IGE, directorio de empresas; recursos: Xunta de Galicia (parques eólicos), IGME (canteras y minas) y Pesca de Galicia (lonjas); cobertura del suelo: ESA WorldCover 2021. Los puestos son entre las {n} ciudades del mapa.", { vintage: `${esc(nat.vintage)}${nat.gdp_vintage ? `; ${t("PIB")}: ${esc(nat.gdp_vintage)}` : ""}`, n: m.cityList.length })}
+    <a href="#" data-pedia>${t("Almanaque ›")}</a></div>`;
 }
 
 /**
@@ -304,9 +306,9 @@ export function goToSection(el, id) {
   const stop = () => {
     ro?.disconnect();
     ro = null;
-    for (const t of ["wheel", "touchstart", "keydown", "pointerdown"]) el.removeEventListener(t, stop);
+    for (const ev of ["wheel", "touchstart", "keydown", "pointerdown"]) el.removeEventListener(ev, stop);
   };
-  for (const t of ["wheel", "touchstart", "keydown", "pointerdown"]) el.addEventListener(t, stop, { passive: true });
+  for (const ev of ["wheel", "touchstart", "keydown", "pointerdown"]) el.addEventListener(ev, stop, { passive: true });
   if (typeof ResizeObserver === "function") {
     ro = new ResizeObserver(() => { if (sec.isConnected) align(); else stop(); });
     for (const c of el.children) ro.observe(c);
@@ -342,8 +344,8 @@ export function render(el, m, h) {
   // Tabs scroll to their section; the active tab follows the scroll position.
   const nav = el.querySelector(".cv-tabs");
   const tabs = [...el.querySelectorAll("[data-tab]")];
-  const secs = tabs.map((t) => el.querySelector(`[data-sec="${t.dataset.tab}"]`));
-  tabs.forEach((t, k) => (t.onclick = () => {
+  const secs = tabs.map((tb) => el.querySelector(`[data-sec="${tb.dataset.tab}"]`));
+  tabs.forEach((tb, k) => (tb.onclick = () => {
     const top = secs[k].offsetTop - nav.offsetHeight - 4;
     el.scrollTo({ top, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   }));
@@ -352,7 +354,7 @@ export function render(el, m, h) {
     let k = 0;
     secs.forEach((s, j) => { if (s.offsetTop <= y) k = j; });
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 4) k = secs.length - 1;
-    tabs.forEach((t, j) => t.classList.toggle("on", j === k));
+    tabs.forEach((tb, j) => tb.classList.toggle("on", j === k));
   };
   el.onscroll = spy;
   spy();

@@ -6,8 +6,9 @@ import { createTable } from "../core/table.js";
 import { createScatter } from "../core/scatter.js";
 import { section, tiles, segmented, lensButton, sourcesHtml, topBy, frameBtn } from "../core/view.js";
 import { rowsHighlight } from "../core/data.js";
+import { t } from "../../../i18n.js";
 
-const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const MONTHS = [t("enero"), t("febrero"), t("marzo"), t("abril"), t("mayo"), t("junio"), t("julio"), t("agosto"), t("septiembre"), t("octubre"), t("noviembre"), t("diciembre")];
 const MEASURES = {
   gini: { label: "Gini", fmt: (v) => dec(v, 1) },
   p80p20: { label: "P80/P20", fmt: (v) => dec(v, 2) },
@@ -23,9 +24,9 @@ export function mount(ctx) {
   const paroWhen = paroDate ? `${MONTHS[+paroDate[2] - 1]} de ${paroDate[1]}` : "";
 
   el.insertAdjacentHTML("beforeend", tiles([
-    { label: "Renta media ≈", value: euros(g.renta_pc), sub: "por persona, 2024" },
-    { label: "Paro registrado", value: pct(g.unemployment), sub: "de los habitantes" },
-    { label: "PIB por habitante", value: euros(g.gdp_pc), sub: "PIB de 2023" },
+    { label: t("Renta media ≈"), value: euros(g.renta_pc), sub: t("por persona, 2024") },
+    { label: t("Paro registrado"), value: pct(g.unemployment), sub: t("de los habitantes") },
+    { label: t("PIB por habitante"), value: euros(g.gdp_pc), sub: t("PIB de 2023") },
   ]));
 
   // Every lens button follows the lens on the map, whichever control changed it.
@@ -43,34 +44,37 @@ export function mount(ctx) {
   ctx.on("lens", () => { for (const b of lensBtns) b._sync(); });
 
   // --- renta frente a PIB por habitante -------------------------------------------------------------------------
-  const aBody = section(el, { title: "Lo que se produce y lo que se ingresa", note: "El PIB por habitante cuenta lo producido donde se produce; la renta, lo que reciben quienes viven allí. Las líneas discontinuas marcan la cifra de Galicia. Arrastra un rectángulo para seleccionar lugares; pasa por el mapa para encontrar uno aquí." });
+  const aBody = section(el, { title: t("Lo que se produce y lo que se ingresa"), note: t("El PIB por habitante cuenta lo producido donde se produce; la renta, lo que reciben quienes viven allí. Las líneas discontinuas marcan la cifra de Galicia. Arrastra un rectángulo para seleccionar lugares; pasa por el mapa para encontrar uno aquí.") });
   let level = counties ? "counties" : "metros";
   const lv = () => data.levels[level];
-  const aCtl = lensRow(aBody, [["renta_pc", "Lente de renta"], ["gdp_pc", "Lente de PIB por habitante"]]);
+  const aCtl = lensRow(aBody, [["renta_pc", t("Lente de renta")], ["gdp_pc", t("Lente de PIB por habitante")]]);
   const aSeg = segmented(aCtl, {
-    label: "Lugares", value: level,
-    options: [{ value: "states", label: "Comarcas" }, { value: "metros", label: "Ciudades" }, ...(counties ? [{ value: "counties", label: "Concellos" }] : [])],
+    label: t("Lugares"), value: level,
+    options: [{ value: "states", label: t("Comarcas") }, { value: "metros", label: t("Ciudades") }, ...(counties ? [{ value: "counties", label: t("Concellos") }] : [])],
     onChange: (v) => { level = v; drawIncome(); },
   });
   aCtl.prepend(aSeg.el);
 
   // Renta goes up the side with short ticks ("18 mil"), so they clear the axis title.
-  const rentaAxis = () => ({ label: level === "states" ? "Renta por persona ≈ (€)" : "Renta por persona (€)", fmt: compact });
+  const rentaAxis = () => ({ label: level === "states" ? t("Renta por persona ≈ (€)") : t("Renta por persona (€)"), fmt: compact });
   const scatter = createScatter(aBody, {
     height: 310, points: [],
-    x: { label: "PIB por habitante", fmt: money, log: true },
+    x: { label: t("PIB por habitante"), fmt: money, log: true },
     y: rentaAxis(),
-    size: { label: "Habitantes", fmt: count3, max: 14, min: 1.4 },
+    size: { label: t("Habitantes"), fmt: count3, max: 14, min: 1.4 },
     refX: fin(g.gdp_pc) ? [{ v: g.gdp_pc }] : [],
-    refY: fin(g.renta_pc) ? [{ v: g.renta_pc, label: "Galicia" }] : [],
+    refY: fin(g.renta_pc) ? [{ v: g.renta_pc, label: t("Galicia") }] : [],
     onHover: (p) => { link.hover(p ? rowsHighlight(lv(), [p.row]) : null); incTable.setHot(p ? p.key : null, false); },
     onClick: (p) => lv().focus(p.row),
     onBrush: (set) => {
       const sel = set ? lv().rows.filter((r) => set.has(r.key)) : [];
       link.base(sel.length ? rowsHighlight(lv(), sel, { dim: true }) : null, { frame: sel.length > 1 });
       incTable.setSelected(set);
-      const noun = sel.length === 1 ? `${lv().noun} seleccionad${level === "counties" ? "o" : "a"}` : `${lv().label.toLowerCase()} seleccionad${level === "counties" ? "os" : "as"}`;
-      selInfo.innerHTML = sel.length ? `<b>${int(sel.length)}</b> ${noun} · ${count3(sel.reduce((a, r) => a + (r.v.population || 0), 0))} habitantes ${frameBtn()}<button type="button" class="adv-mini" data-clear>Quitar selección</button>` : "";
+      const masc = level === "counties";
+      const noun = sel.length === 1
+        ? masc ? t("{place} seleccionado", { place: lv().noun }) : t("{place} seleccionada", { place: lv().noun })
+        : masc ? t("{place} seleccionados", { place: lv().label.toLowerCase() }) : t("{place} seleccionadas", { place: lv().label.toLowerCase() });
+      selInfo.innerHTML = sel.length ? `${t("<b>{n}</b> {noun} · {pop} habitantes", { n: int(sel.length), noun, pop: count3(sel.reduce((a, r) => a + (r.v.population || 0), 0)) })} ${frameBtn()}<button type="button" class="adv-mini" data-clear>${t("Quitar selección")}</button>` : "";
     },
   });
   const selInfo = document.createElement("div");
@@ -78,15 +82,15 @@ export function mount(ctx) {
   aBody.appendChild(selInfo);
   const clearSel = () => { scatter.setSelected(null); incTable.setSelected(null); link.base(null); selInfo.innerHTML = ""; };
   selInfo.addEventListener("click", (e) => { if (e.target.closest("[data-clear]")) clearSel(); });
-  aBody.insertAdjacentHTML("beforeend", `<h4 class="adv-h4">Tabla de renta y PIB</h4>`);
-  const nameCol = { key: "name", label: "Lugar", align: "l", value: (r) => r.name, html: (r) => `${esc(r.name)} <span class="sub">${esc(r.sub)}</span>` };
-  const popCol = { key: "population", label: "Habitantes", value: (r) => r.v.population, text: (r) => count3(r.v.population), hideBelow: 380 };
+  aBody.insertAdjacentHTML("beforeend", `<h4 class="adv-h4">${t("Tabla de renta y PIB")}</h4>`);
+  const nameCol = { key: "name", label: t("Lugar"), align: "l", value: (r) => r.name, html: (r) => `${esc(r.name)} <span class="sub">${esc(r.sub)}</span>` };
+  const popCol = { key: "population", label: t("Habitantes"), value: (r) => r.v.population, text: (r) => count3(r.v.population), hideBelow: 380 };
   const incTable = createTable(aBody, {
-    caption: "Renta por persona y PIB por habitante", rank: true, maxHeight: 260, rows: [], search: "Buscar lugar",
+    caption: t("Renta por persona y PIB por habitante"), rank: true, maxHeight: 260, rows: [], search: t("Buscar lugar"),
     columns: [
       nameCol, popCol,
-      { key: "renta_pc", label: "Renta", value: (r) => r.v.renta_pc, text: (r) => euros(r.v.renta_pc) },
-      { key: "gdp_pc", label: "PIB/hab.", title: "Ordenar por PIB por habitante", value: (r) => r.v.gdp_pc, text: (r) => euros(r.v.gdp_pc) },
+      { key: "renta_pc", label: t("Renta"), value: (r) => r.v.renta_pc, text: (r) => euros(r.v.renta_pc) },
+      { key: "gdp_pc", label: t("PIB/hab."), title: t("Ordenar por PIB por habitante"), value: (r) => r.v.gdp_pc, text: (r) => euros(r.v.gdp_pc) },
     ],
     sort: { key: "renta_pc", dir: "desc" },
     onHover: (r) => { link.hover(r ? rowsHighlight(lv(), [r]) : null); scatter.setHot(r ? r.key : null); },
@@ -103,7 +107,7 @@ export function mount(ctx) {
     ].map((x) => x.r.key);
     scatter.update({
       // Only the concellos spread widely enough for a log axis (a short log range gets no round ticks).
-      x: { label: "PIB por habitante", fmt: money, log: level === "counties" },
+      x: { label: t("PIB por habitante"), fmt: money, log: level === "counties" },
       y: rentaAxis(),
       points: rows.map((r) => ({ key: r.key, x: r.v.gdp_pc, y: r.v.renta_pc, s: r.v.population, label: r.name, sub: r.sub, row: r })),
       labels: [...new Set(labels)],
@@ -113,19 +117,19 @@ export function mount(ctx) {
   drawIncome();
 
   // --- desigualdad ----------------------------------------------------------------------------------------------
-  const dBody = section(el, { title: "Desigualdad", note: "Gini: de 0 (todos con la misma renta) a 100 (una sola persona la tiene toda). P80/P20: cuántas veces la renta del percentil 80 contiene la del percentil 20. Pasa por una barra para ver esos lugares en el mapa." });
+  const dBody = section(el, { title: t("Desigualdad"), note: t("Gini: de 0 (todos con la misma renta) a 100 (una sola persona la tiene toda). P80/P20: cuántas veces la renta del percentil 80 contiene la del percentil 20. Pasa por una barra para ver esos lugares en el mapa.") });
   let dLevel = counties ? "counties" : "metros";
   let measure = "gini";
   const dlv = () => data.levels[dLevel];
-  const dCtl = lensRow(dBody, [["gini", "Lente de Gini"], ["p80p20", "Lente P80/P20"]]);
+  const dCtl = lensRow(dBody, [["gini", t("Lente de Gini")], ["p80p20", t("Lente P80/P20")]]);
   const mSeg = segmented(dCtl, {
-    label: "Medida de desigualdad", value: measure,
+    label: t("Medida de desigualdad"), value: measure,
     options: Object.entries(MEASURES).map(([value, m]) => ({ value, label: m.label })),
     onChange: (v) => { measure = v; drawHist(); ineqTable.setColumns(ineqCols(), { key: measure, dir: "desc" }); },
   });
   const dSeg = segmented(dCtl, {
-    label: "Lugares", value: dLevel,
-    options: [{ value: "metros", label: "Ciudades" }, ...(counties ? [{ value: "counties", label: "Concellos" }] : [])],
+    label: t("Lugares"), value: dLevel,
+    options: [{ value: "metros", label: t("Ciudades") }, ...(counties ? [{ value: "counties", label: t("Concellos") }] : [])],
     onChange: (v) => { dLevel = v; link.hover(null); drawHist(); ineqTable.setColumns(ineqCols()); ineqTable.setRows(ineqRows()); },
   });
   dCtl.prepend(mSeg.el, dSeg.el);
@@ -141,9 +145,9 @@ export function mount(ctx) {
     hist = histogram(dHost, {
       values, bins: dLevel === "counties" ? 30 : 16, height: 120,
       fmt: (v) => fmtShort("float", v), unitLabel: dlv().label.toLowerCase(),
-      label: `Histograma de ${m.label} por ${dlv().noun}`,
-      colorOf: (_, t) => heat(0.2 + 0.8 * t),
-      markers: fin(median) ? [{ v: median, label: `Mediana ${m.fmt(median)}` }] : [],
+      label: t("Histograma de {medida} por {noun}", { medida: m.label, noun: dlv().noun }),
+      colorOf: (_, tk) => heat(0.2 + 0.8 * tk),
+      markers: fin(median) ? [{ v: median, label: t("Mediana {v}", { v: m.fmt(median) }) }] : [],
       onHover: (bin) => link.hover(bin && bin.keys.length ? rowsHighlight(dlv(), bin.keys.map((k) => dlv().byKey.get(k)), { dim: true }) : null),
     });
   }
@@ -157,7 +161,7 @@ export function mount(ctx) {
   ];
   drawHist();
   const ineqTable = createTable(dBody, {
-    caption: "Desigualdad de la renta", rank: true, maxHeight: 240, rows: ineqRows(), search: "Buscar lugar",
+    caption: t("Desigualdad de la renta"), rank: true, maxHeight: 240, rows: ineqRows(), search: t("Buscar lugar"),
     columns: ineqCols(),
     sort: { key: measure, dir: "desc" },
     onHover: (r) => link.hover(r ? rowsHighlight(dlv(), [r]) : null),
@@ -165,10 +169,10 @@ export function mount(ctx) {
   });
 
   // --- paro registrado ------------------------------------------------------------------------------------------
-  const uBody = section(el, { title: "Paro registrado", note: `Parados registrados por habitante${paroWhen ? ` en ${esc(paroWhen)}` : ""}. No es la tasa de paro: se divide entre toda la población, no entre la población activa. Galicia: ${pct(g.unemployment)}.` });
+  const uBody = section(el, { title: t("Paro registrado"), note: `${paroWhen ? t("Parados registrados por habitante en {when}.", { when: esc(paroWhen) }) : t("Parados registrados por habitante.")} ${t("No es la tasa de paro: se divide entre toda la población, no entre la población activa. Galicia: {p}.", { p: pct(g.unemployment) })}` });
   let uLevel = "states";
-  const uCtl = lensRow(uBody, [["unemployment", "Lente de paro"]]);
-  const uSeg = segmented(uCtl, { label: "Lugares", value: uLevel, options: [{ value: "states", label: "Comarcas" }, { value: "metros", label: "Ciudades" }], onChange: (v) => { uLevel = v; link.hover(null); drawU(); } });
+  const uCtl = lensRow(uBody, [["unemployment", t("Lente de paro")]]);
+  const uSeg = segmented(uCtl, { label: t("Lugares"), value: uLevel, options: [{ value: "states", label: t("Comarcas") }, { value: "metros", label: t("Ciudades") }], onChange: (v) => { uLevel = v; link.hover(null); drawU(); } });
   uCtl.prepend(uSeg.el);
   const uHost = document.createElement("div");
   uBody.appendChild(uHost);
@@ -180,20 +184,20 @@ export function mount(ctx) {
     const max = Math.max(0, ...high.map((x) => x.v));
     const mk = (list) => list.map((x) => ({ key: x.r.key, label: x.r.name, sub: uLevel === "metros" ? x.r.sub : "", value: x.v, text: pct(x.v), tone: x.v > g.unemployment * 1.03 ? "bad" : x.v < g.unemployment * 0.97 ? "good" : null, row: x.r }));
     const o = { max, onHover: (r) => link.hover(r ? rowsHighlight(lvU, [r.row]) : null), onClick: (r) => lvU.focus(r.row) };
-    uHost.insertAdjacentHTML("beforeend", `<h4 class="adv-h4">Donde hay más</h4>`);
-    barList(uHost, { ...o, rows: mk(high), ariaLabel: "Más parados registrados por habitante" });
-    uHost.insertAdjacentHTML("beforeend", `<h4 class="adv-h4">Donde hay menos</h4>`);
-    barList(uHost, { ...o, rows: mk(low), ariaLabel: "Menos parados registrados por habitante" });
+    uHost.insertAdjacentHTML("beforeend", `<h4 class="adv-h4">${t("Donde hay más")}</h4>`);
+    barList(uHost, { ...o, rows: mk(high), ariaLabel: t("Más parados registrados por habitante") });
+    uHost.insertAdjacentHTML("beforeend", `<h4 class="adv-h4">${t("Donde hay menos")}</h4>`);
+    barList(uHost, { ...o, rows: mk(low), ariaLabel: t("Menos parados registrados por habitante") });
   }
   drawU();
 
   const noParo = (counties?.rows || []).filter((r) => !fin(r.v.unemployment)).map((r) => r.name);
   el.insertAdjacentHTML("beforeend", sourcesHtml(data, ["ine_adrh", "ige_paro", "ige_pib", "ine_padron"], [
-    "La renta es la renta neta media por persona de 2024, no la mediana. En las comarcas y en Galicia es la media de sus concellos ponderada por población: una aproximación (≈).",
-    "El PIB por habitante divide el PIB de 2023 que el IGE estima por concello entre la población de 2025. Se atribuye al lugar donde se produce, así que no mide lo que ingresan sus vecinos.",
-    "No hay Gini ni P80/P20 de Galicia ni de las comarcas: no se pueden calcular a partir de los concellos. La raya del histograma es la mediana de los lugares dibujados, sin ponderar por población.",
-    "En los concellos pequeños unos pocos hogares o unas pocas personas mueven mucho la renta, la desigualdad y el paro por habitante.",
-    ...(noParo.length ? [`Sin dato de paro: ${esc(noParo.join(" y "))}. El IGE da 0 en esos concellos fusionados, que es un dato ausente y no un cero; su comarca los deja fuera de la cuenta.`] : []),
+    t("La renta es la renta neta media por persona de 2024, no la mediana. En las comarcas y en Galicia es la media de sus concellos ponderada por población: una aproximación (≈)."),
+    t("El PIB por habitante divide el PIB de 2023 que el IGE estima por concello entre la población de 2025. Se atribuye al lugar donde se produce, así que no mide lo que ingresan sus vecinos."),
+    t("No hay Gini ni P80/P20 de Galicia ni de las comarcas: no se pueden calcular a partir de los concellos. La raya del histograma es la mediana de los lugares dibujados, sin ponderar por población."),
+    t("En los concellos pequeños unos pocos hogares o unas pocas personas mueven mucho la renta, la desigualdad y el paro por habitante."),
+    ...(noParo.length ? [t("Sin dato de paro: {lista}. El IGE da 0 en esos concellos fusionados, que es un dato ausente y no un cero; su comarca los deja fuera de la cuenta.", { lista: esc(noParo.join(` ${t("y")} `)) })] : []),
   ]));
 
   ctx.cleanup(() => { scatter.destroy(); incTable.destroy(); ineqTable.destroy(); });

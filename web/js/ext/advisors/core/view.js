@@ -1,6 +1,7 @@
 // Layout helpers shared by the advisor views: sections, controls, stat tiles, sources and caveats.
 import { esc, el, fin } from "./util.js";
 import { icon } from "../../../ui/icon.js";
+import { t } from "../../../i18n.js";
 
 /** Append a titled section; returns its body element. opts: {title, note, kicker, collapsed, cls} */
 export function section(parent, { title, note = "", kicker = "", cls = "", open = true } = {}) {
@@ -16,8 +17,8 @@ export function section(parent, { title, note = "", kicker = "", cls = "", open 
 
 /** Headline tiles: [{label, value, sub, color}] → html */
 export function tiles(items) {
-  return `<div class="adv-tiles">${items.map((t) => `<div class="adv-tile"${t.color ? ` style="--tc:${esc(t.color)}"` : ""}>
-    <span class="k">${esc(t.label)}</span><b title="${esc(t.value)}">${esc(t.value)}</b>${t.sub ? `<span class="s" title="${esc(t.sub)}">${esc(t.sub)}</span>` : ""}</div>`).join("")}</div>`;
+  return `<div class="adv-tiles">${items.map((it) => `<div class="adv-tile"${it.color ? ` style="--tc:${esc(it.color)}"` : ""}>
+    <span class="k">${esc(it.label)}</span><b title="${esc(it.value)}">${esc(it.value)}</b>${it.sub ? `<span class="s" title="${esc(it.sub)}">${esc(it.sub)}</span>` : ""}</div>`).join("")}</div>`;
 }
 
 /** A segmented control. options: [{value, label}] */
@@ -97,7 +98,7 @@ export function lensButton(app, lensId, label) {
   const sync = () => {
     const on = app.state.lens?.id === lensId;
     b.setAttribute("aria-pressed", String(on));
-    b.innerHTML = `${icon(lens.icon || "layers", lens.emoji || "🗺️", { size: 14 })}<span>${esc(on ? `Lente activa: ${lens.name}` : label || `Ver en el mapa la lente ${lens.name}`)}</span>`;
+    b.innerHTML = `${icon(lens.icon || "layers", lens.emoji || "🗺️", { size: 14 })}<span>${esc(on ? t("Lente activa: {name}", { name: lens.name }) : label || t("Ver en el mapa la lente {name}", { name: lens.name }))}</span>`;
   };
   sync();
   b.addEventListener("click", () => {
@@ -113,7 +114,7 @@ export function lensButton(app, lensId, label) {
  * ctx.setLens). options: [{value, label, lens: () => lens id | lens object | null}]. Follows lens changes made
  * elsewhere (the lens dock, L): when the map shows none of the options, no button is pressed.
  */
-export function mapPicker(ctx, parent, { options, value, label = "Mapa" }) {
+export function mapPicker(ctx, parent, { options, value, label = t("Mapa") }) {
   const row = el("div", "adv-mappick");
   row.innerHTML = `<span class="k">${icon("layers", "▤", { size: 13 })}${esc(label)}</span>`;
   const resolve = (o) => {
@@ -130,7 +131,7 @@ export function mapPicker(ctx, parent, { options, value, label = "Mapa" }) {
   const want = ctx.app.state.lens?.id || ctx.app.pendingLens;
   const start = want ? options.find((o) => resolve(o)?.id === want) : null;
   if (start) value = start.value;
-  const seg = segmented(row, { label: `Color: ${label}`, options, value, onChange: (v) => pick(v) });
+  const seg = segmented(row, { label: t("Color: {label}", { label }), options, value, onChange: (v) => pick(v) });
   const sync = (lens) => {
     const o = options.find((x) => resolve(x) === (lens || null));
     seg.set(o ? o.value : "__none");
@@ -149,16 +150,16 @@ export function mapPicker(ctx, parent, { options, value, label = "Mapa" }) {
 }
 
 /** A "Frame on map" button for a selection (handled by the advisors shell: flies to the view's highlight). */
-export const frameBtn = () => `<button type="button" class="adv-mini adv-framebtn" data-frame title="Llevar el mapa a la selección"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" fill="currentColor"/></svg>Centrar en el mapa</button>`;
+export const frameBtn = () => `<button type="button" class="adv-mini adv-framebtn" data-frame title="${t("Llevar el mapa a la selección")}"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" fill="currentColor"/></svg>${t("Centrar en el mapa")}</button>`;
 
 /** Sources and caveats footer. ids: source ids from sources.json; caveats: [string] */
 export function sourcesHtml(data, ids, caveats = []) {
   const list = [...new Set(ids)].map((id) => data.source(id)).filter(Boolean);
   return `<footer class="adv-sources">
-    ${caveats.length ? `<h4>Léelo con cuidado</h4><ul class="adv-caveats">${caveats.map((c) => `<li>${c}</li>`).join("")}</ul>` : ""}
-    <h4>Fuentes</h4>
+    ${caveats.length ? `<h4>${t("Léelo con cuidado")}</h4><ul class="adv-caveats">${caveats.map((c) => `<li>${c}</li>`).join("")}</ul>` : ""}
+    <h4>${t("Fuentes")}</h4>
     <ul>${list.map((s) => `<li><b>${esc(s.title)}</b>, ${esc(s.publisher || "")}${s.vintage ? ` <span class="v">${esc(s.vintage)}</span>` : ""}</li>`).join("")}</ul>
-    <button type="button" class="adv-link" data-pedia="Sources">Todas las fuentes en el Almanaque</button>
+    <button type="button" class="adv-link" data-pedia="Sources">${t("Todas las fuentes en el Almanaque")}</button>
   </footer>`;
 }
 

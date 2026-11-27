@@ -10,6 +10,7 @@
 // Every chart calls opts.onHover(item | null) and opts.onClick(item) and returns {setHot(key), el, ...}.
 import { esc, fin, clamp, scale, ticks, logTicks, rampColor } from "./util.js";
 import { int, pct } from "./fmt.js";
+import { t } from "../../../i18n.js";
 
 /** Delegated hover / focus / click on [data-key] children. */
 function wire(root, find, { onHover, onClick }) {
@@ -20,20 +21,20 @@ function wire(root, find, { onHover, onClick }) {
     onHover?.(item);
   };
   root.addEventListener("pointerover", (e) => {
-    const t = e.target.closest("[data-key]");
-    set(t && root.contains(t) ? find(t) : null);
+    const tg = e.target.closest("[data-key]");
+    set(tg && root.contains(tg) ? find(tg) : null);
   });
   root.addEventListener("pointerleave", () => set(null));
   root.addEventListener("focusin", (e) => {
-    const t = e.target.closest("[data-key]");
-    if (t) set(find(t));
+    const tg = e.target.closest("[data-key]");
+    if (tg) set(find(tg));
   });
   root.addEventListener("focusout", (e) => {
     if (!root.contains(e.relatedTarget)) set(null);
   });
   root.addEventListener("click", (e) => {
-    const t = e.target.closest("[data-key]");
-    if (t && root.contains(t)) onClick?.(find(t), e);
+    const tg = e.target.closest("[data-key]");
+    if (tg && root.contains(tg)) onClick?.(find(tg), e);
   });
 }
 
@@ -68,10 +69,10 @@ export function barList(host, opts) {
       <span class="lb">${esc(r.label)}${r.sub ? ` <span class="sub">${esc(r.sub)}</span>` : ""}</span>
       <span class="vl${r.tone ? " " + r.tone : ""}">${esc(r.text ?? "")}</span>
       <span class="tr"><i class="${neg ? "neg" : ""}${r.tone ? " " + r.tone : ""}" style="${style};${color}"></i></span></button>`;
-  }).join("") : `<p class="adv-empty">Sin datos.</p>`;
+  }).join("") : `<p class="adv-empty">${t("Sin datos.")}</p>`;
   host.appendChild(root);
   const byKey = new Map(rows.map((r) => [String(r.key), r]));
-  wire(root, (t) => byKey.get(t.dataset.key), opts);
+  wire(root, (tg) => byKey.get(tg.dataset.key), opts);
   return {
     el: root,
     setHot: (key) => markHot(root, key),
@@ -106,7 +107,7 @@ export function stackedBars(host, opts) {
     return `<button type="button" role="listitem" class="adv-srow" data-key="${esc(r.key)}" aria-label="${esc(`${r.label}: ${r.text ?? ""}`)}">
       <span class="lb">${esc(r.label)}${r.sub ? ` <span class="sub">${esc(r.sub)}</span>` : ""}</span>
       <span class="st">${segs}</span><span class="vl">${esc(r.text ?? "")}</span></button>`;
-  }).join("") || `<p class="adv-empty">Sin datos.</p>`;
+  }).join("") || `<p class="adv-empty">${t("Sin datos.")}</p>`;
   host.appendChild(root);
   const byKey = new Map(rows.map((r) => [String(r.key), r]));
   let lastPart = null;
@@ -114,11 +115,11 @@ export function stackedBars(host, opts) {
     const p = e.target.closest?.("[data-part]")?.dataset.part ?? null;
     if (p !== lastPart) {
       lastPart = p;
-      const t = e.target.closest("[data-key]");
-      if (t) opts.onHover?.({ row: byKey.get(t.dataset.key), part: p });
+      const tg = e.target.closest("[data-key]");
+      if (tg) opts.onHover?.({ row: byKey.get(tg.dataset.key), part: p });
     }
   });
-  wire(root, (t) => ({ row: byKey.get(t.dataset.key), part: lastPart }), {
+  wire(root, (tg) => ({ row: byKey.get(tg.dataset.key), part: lastPart }), {
     onHover: (x) => opts.onHover?.(x && x.row ? x : null),
     onClick: (x, e) => opts.onClick?.({ row: x.row, part: e.target.closest?.("[data-part]")?.dataset.part ?? null }),
   });
@@ -141,7 +142,7 @@ export function shareBar(host, opts) {
     <span class="vl">${pct(p.value / tot, p.value / tot < 0.01 ? 1 : 0)}</span></button>`).join("")}</div>`}`;
   host.appendChild(root);
   const byKey = new Map(parts.map((p) => [String(p.key), p]));
-  wire(root, (t) => byKey.get(t.dataset.key), opts);
+  wire(root, (tg) => byKey.get(tg.dataset.key), opts);
   return {
     el: root,
     setHot: (key) => { root.querySelectorAll(".hot").forEach((n) => n.classList.remove("hot")); if (key != null) root.querySelectorAll(`[data-key="${CSS.escape(String(key))}"]`).forEach((n) => n.classList.add("hot")); },
@@ -160,7 +161,7 @@ export function donut(host, opts) {
   let a = -Math.PI / 2;
   const arc = (a0, a1) => {
     const large = a1 - a0 > Math.PI ? 1 : 0;
-    const p = (rr, t) => `${(R + rr * Math.cos(t)).toFixed(2)},${(R + rr * Math.sin(t)).toFixed(2)}`;
+    const p = (rr, tg) => `${(R + rr * Math.cos(tg)).toFixed(2)},${(R + rr * Math.sin(tg)).toFixed(2)}`;
     return `M${p(R - 1, a0)}A${R - 1},${R - 1} 0 ${large} 1 ${p(R - 1, a1)}L${p(r0, a1)}A${r0},${r0} 0 ${large} 0 ${p(r0, a0)}Z`;
   };
   const segs = parts.map((p) => {
@@ -181,7 +182,7 @@ export function donut(host, opts) {
     return { el: root, setHot() {} };
   }
   const byKey = new Map(parts.map((p) => [String(p.key), p]));
-  wire(root, (t) => byKey.get(t.dataset.key), opts);
+  wire(root, (tg) => byKey.get(tg.dataset.key), opts);
   return { el: root, setHot: (key) => markHot(root, key) };
 }
 
@@ -198,16 +199,16 @@ export function histogram(host, opts) {
   const root = document.createElement("div");
   root.className = "adv-hist";
   host.appendChild(root);
-  if (!vals.length) { root.innerHTML = `<p class="adv-empty">Sin datos.</p>`; return { el: root, setHot() {} }; }
+  if (!vals.length) { root.innerHTML = `<p class="adv-empty">${t("Sin datos.")}</p>`; return { el: root, setHot() {} }; }
   let [d0, d1] = opts.domain || [Math.min(...vals.map((d) => d.v)), Math.max(...vals.map((d) => d.v))];
   if (!(d1 > d0)) d1 = d0 + 1;
   const nb = opts.bins || 28;
-  const t = opts.log ? (v) => Math.log10(v) : (v) => v;
+  const tf = opts.log ? (v) => Math.log10(v) : (v) => v;
   const ti = opts.log ? (v) => 10 ** v : (v) => v;
-  const a = t(d0), b = t(d1);
+  const a = tf(d0), b = tf(d1);
   const bins = Array.from({ length: nb }, (_, i) => ({ i, x0: ti(a + ((b - a) * i) / nb), x1: ti(a + ((b - a) * (i + 1)) / nb), keys: [], count: 0, weight: 0 }));
   for (const d of vals) {
-    const k = clamp(Math.floor(((t(d.v) - a) / (b - a)) * nb), 0, nb - 1);
+    const k = clamp(Math.floor(((tf(d.v) - a) / (b - a)) * nb), 0, nb - 1);
     bins[k].keys.push(d.key);
     bins[k].count++;
     bins[k].weight += fin(d.w) ? d.w : 1;
@@ -218,7 +219,7 @@ export function histogram(host, opts) {
   const tk = opts.log ? logTicks(d0, d1) : ticks(d0, d1, 5);
   const fmt = opts.fmt || ((v) => String(v));
   const color = opts.color || "#c9a45c";
-  root.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label || "Histograma")}">
+  root.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label || t("Histograma"))}">
     ${bins.map((bn) => {
       const v = opts.weighted ? bn.weight : bn.count;
       const h = (v / ymax) * (H - m.t - m.b);
@@ -228,14 +229,14 @@ export function histogram(host, opts) {
         <title>${esc(`${fmt(bn.x0)} – ${fmt(bn.x1)}: ${int(bn.count)}${opts.unitLabel ? " " + opts.unitLabel : ""}${opts.weighted && opts.weightFmt ? ` (${opts.weightFmt(bn.weight)})` : ""}`)}</title></g>`;
     }).join("")}
     <line x1="${m.l}" x2="${W - m.r}" y1="${H - m.b + 0.5}" y2="${H - m.b + 0.5}" class="axis"/>
-    ${tk.map((v) => { const px = x(t(v)); return px == null ? "" : `<line x1="${px}" x2="${px}" y1="${H - m.b}" y2="${H - m.b + 4}" class="axis"/><text x="${px}" y="${H - 6}" text-anchor="middle" class="tick">${esc(fmt(v))}</text>`; }).join("")}
-    ${(opts.markers || []).map((mk) => { const px = x(t(mk.v)); return px == null ? "" : `<line x1="${px}" x2="${px}" y1="${m.t}" y2="${H - m.b}" class="marker"/><text x="${clamp(px + 3, m.l, W - 60)}" y="${m.t + 9}" class="mk">${esc(mk.label)}</text>`; }).join("")}
+    ${tk.map((v) => { const px = x(tf(v)); return px == null ? "" : `<line x1="${px}" x2="${px}" y1="${H - m.b}" y2="${H - m.b + 4}" class="axis"/><text x="${px}" y="${H - 6}" text-anchor="middle" class="tick">${esc(fmt(v))}</text>`; }).join("")}
+    ${(opts.markers || []).map((mk) => { const px = x(tf(mk.v)); return px == null ? "" : `<line x1="${px}" x2="${px}" y1="${m.t}" y2="${H - m.b}" class="marker"/><text x="${clamp(px + 3, m.l, W - 60)}" y="${m.t + 9}" class="mk">${esc(mk.label)}</text>`; }).join("")}
   </svg>`;
   wire(root, (g) => bins[+g.dataset.key], opts);
   return {
     el: root,
     bins,
-    binOf: (v) => (fin(v) && (!opts.log || v > 0) ? bins[clamp(Math.floor(((t(v) - a) / (b - a)) * nb), 0, nb - 1)] : null),
+    binOf: (v) => (fin(v) && (!opts.log || v > 0) ? bins[clamp(Math.floor(((tf(v) - a) / (b - a)) * nb), 0, nb - 1)] : null),
     setHot: (i) => markHot(root, i),
   };
 }
@@ -260,7 +261,7 @@ export function smallMultiples(host, opts) {
   }
   host.appendChild(root);
   const byKey = new Map((opts.items || []).map((x) => [String(x.key), x]));
-  wire(root, (t) => byKey.get(t.dataset.key), opts);
+  wire(root, (tg) => byKey.get(tg.dataset.key), opts);
   return { el: root, setHot: (key) => { const n = markHot(root, key); n?.scrollIntoView?.({ block: "nearest" }); } };
 }
 

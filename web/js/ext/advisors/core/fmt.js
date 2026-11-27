@@ -3,6 +3,7 @@
 // plus a few of our own: money (compact €), signed (signed %), lq (×1,23), count, ratio (×4,2).
 import { compact, dollars, euros, int, money, pct } from "../../../format.js";
 import { fin } from "./util.js";
+import { t } from "../../../i18n.js";
 
 export { compact, dollars, euros, int, money, pct };
 
@@ -39,7 +40,7 @@ export function fmtValue(format, v, unit) {
     case "signed": return signedPct(v);
     case "lq": return `×${dec(v, 2)}`;
     case "ratio": return `×${dec(v, 1)}`;
-    case "years": return `${dec(v, 1)}${NB}años`;
+    case "years": return `${dec(v, 1)}${NB}${t("años")}`;
     case "km2": return `${Math.abs(v) < 100 ? dec(v, 1) : int(v)}${NB}km²`;
     case "float": return Math.abs(v) >= 100 ? int(v) : Math.abs(v) >= 10 ? dec(v, 1) : dec(v, 2);
     default:

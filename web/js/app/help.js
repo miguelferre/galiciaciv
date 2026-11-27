@@ -1,28 +1,29 @@
 // Keyboard & mouse cheat-sheet.
 import { icon } from "../ui/icon.js";
+import { t } from "../i18n.js";
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || "");
 const MOD = isMac ? "⌘" : "Ctrl";
 
 const ROWS = [
-  ["Moverse", [
-    [["Arrastrar", "←↑→↓", "WASD"], "Desplazar el mapa"],
-    [["Rueda", "+", "–"], "Acercar y alejar"],
-    [["Doble clic"], "Acercar a un punto"],
-    [["Dos dedos"], "Pellizcar para el zoom, arrastrar para desplazar (táctil)"],
-    [["Minimapa"], "Pulsa o arrastra para ir a un punto"],
+  [t("Moverse"), [
+    [[t("Arrastrar"), "←↑→↓", "WASD"], t("Desplazar el mapa")],
+    [[t("Rueda"), "+", "–"], t("Acercar y alejar")],
+    [[t("Doble clic")], t("Acercar a un punto")],
+    [[t("Dos dedos")], t("Pellizcar para el zoom, arrastrar para desplazar (táctil)")],
+    [[t("Minimapa")], t("Pulsa o arrastra para ir a un punto")],
   ]],
-  ["Explorar", [
-    [["Clic en ciudad"], "Abrir la ficha de la ciudad"],
-    [["Clic en tierra"], "Abrir esa comarca"],
-    [["/", `${MOD} K`], "Buscar ciudades y comarcas"],
-    [["L", "Shift L"], "Lente siguiente / anterior"],
-    [["Leyenda"], "Pasa el ratón o arrastra por la escala para ver solo ese rango"],
-    [["R"], "Mostrar u ocultar recursos"],
+  [t("Explorar"), [
+    [[t("Clic en ciudad")], t("Abrir la ficha de la ciudad")],
+    [[t("Clic en tierra")], t("Abrir esa comarca")],
+    [["/", `${MOD} K`], t("Buscar ciudades y comarcas")],
+    [["L", "Shift L"], t("Lente siguiente / anterior")],
+    [[t("Leyenda")], t("Pasa el ratón o arrastra por la escala para ver solo ese rango")],
+    [["R"], t("Mostrar u ocultar recursos")],
   ]],
-  ["Paneles", [
-    [["?"], "Esta ayuda"],
-    [["Esc"], "Cierra la ayuda, la búsqueda, el Almanaque y luego el panel"],
+  [t("Paneles"), [
+    [["?"], t("Esta ayuda")],
+    [["Esc"], t("Cierra la ayuda, la búsqueda, el Almanaque y luego el panel")],
   ]],
 ];
 
@@ -32,15 +33,15 @@ export function initHelp() {
   const card = modal.querySelector(".help-card");
   let restore = null;
   card.innerHTML = `
-    <button class="icon-btn help-close" data-close aria-label="Cerrar la ayuda">${icon("close", "✕", { size: 13 })}</button>
-    <h2 id="help-title">${icon("help", "?", { size: 22 })}<span>Controles</span></h2>
+    <button class="icon-btn help-close" data-close aria-label="${t("Cerrar la ayuda")}">${icon("close", "✕", { size: 13 })}</button>
+    <h2 id="help-title">${icon("help", "?", { size: 22 })}<span>${t("Controles")}</span></h2>
     <div class="help-cols">${ROWS.map(([title, rows]) => `
       <section><h3>${title}</h3>${rows.map(([keys, what]) => `
         <div class="help-row"><span class="keys">${keys.map((k) => `<kbd>${k}</kbd>`).join("")}</span><span>${what}</span></div>`).join("")}
       </section>`).join("")}</div>
-    <p class="help-foot">Cada número sale de datos públicos: abre el <b>Almanaque</b> para ver las fuentes.
-      El enlace de la barra de direcciones reabre esta misma vista.
-      Basado en usaciv de Andrej Karpathy (licencia MIT).</p>`;
+    <p class="help-foot">${t("Cada número sale de datos públicos: abre el {almanaque} para ver las fuentes.", { almanaque: "<b>" + t("Almanaque") + "</b>" })}
+      ${t("El enlace de la barra de direcciones reabre esta misma vista.")}
+      ${t("Basado en usaciv de Andrej Karpathy (licencia MIT).")}</p>`;
 
   const close = () => {
     if (modal.hidden) return;

@@ -16,17 +16,24 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+# Two jobs, as in GitHub's Pages template: in one job, deploy-pages asked for the artifact
+# 0.4 s after the upload and GitHub did not list it yet (3 of 4 runs failed on 2026-11-26/27).
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4

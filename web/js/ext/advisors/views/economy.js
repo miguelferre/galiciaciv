@@ -1,10 +1,11 @@
-// Economy advisor: affiliations by sector, city GDP on the map, leaders and specialisation.
+// Economy advisor: affiliations by sector, city GDP on the map, leaders, specialisation and growth vs output.
 // GDP is counted where it is produced; affiliations (and so specialisation) where the person lives.
 import { esc, fin, ratio, colorScale, robustDomain, RAMPS } from "../core/util.js";
-import { money, euros, pct, int, dec } from "../core/fmt.js";
+import { money, euros, pct, int, dec, signedPct, count3, fmtShort } from "../core/fmt.js";
 import { barList, rampLegend } from "../core/charts.js";
 import { createTable } from "../core/table.js";
-import { section, tiles, segmented, selectBox, lensButton, sourcesHtml } from "../core/view.js";
+import { createScatter } from "../core/scatter.js";
+import { section, tiles, segmented, selectBox, lensButton, sourcesHtml, frameBtn } from "../core/view.js";
 import { rowsHighlight } from "../core/data.js";
 import { icon } from "../../../ui/icon.js";
 
@@ -45,6 +46,8 @@ export function mount(ctx) {
     html: (r) => `${esc(r.name)} <span class="sub">${esc(r.sub)}</span>`,
   });
   const levelOptions = [{ value: "metros", label: "Ciudades" }, { value: "states", label: "Comarcas" }];
+  const growthYears = (data.nat.growth_years || []).join("-");
+  let scatter = null; // built after the specialisation section, which it reads
 
   // --- headline -------------------------------------------------------------------------------------------------
   const topSector = SECTORS.filter((s) => fin(share(g, s))).sort((a, b) => share(g, b) - share(g, a))[0];
@@ -113,7 +116,9 @@ export function mount(ctx) {
     nameCol(leadLevel),
     { key: "gdp", label: "PIB", value: (r) => r.v.gdp, text: (r) => money(r.v.gdp), bar: { max: Math.max(1, ...leadLevel.rows.map((r) => r.v.gdp || 0)), color: "rgba(224,181,76,.35)" } },
     { key: "gdp_pc", label: "Por habitante", short: "Por habi&shy;tante", value: (r) => r.v.gdp_pc, text: (r) => euros(r.v.gdp_pc) },
-    { key: "of_total", label: "Del total", title: "Parte del PIB de Galicia (ordenar)", value: (r) => ratio(r.v.gdp, g.gdp), text: (r) => pct(ratio(r.v.gdp, g.gdp)) },
+    // no room on a phone for five columns: the share of Galicia's GDP goes
+    ...(app.isMobile() ? [] : [{ key: "of_total", label: "Del total", title: "Parte del PIB de Galicia (ordenar)", value: (r) => ratio(r.v.gdp, g.gdp), text: (r) => pct(ratio(r.v.gdp, g.gdp)) }]),
+    { key: "growth", label: "Población", short: "Pobla&shy;ción", title: `Variación de la población ${growthYears} (ordenar)`, value: (r) => r.v.growth, text: (r) => signedPct(r.v.growth) },
   ];
   segmented(lCtl, {
     label: "Nivel", value: "metros", options: levelOptions,
@@ -121,13 +126,13 @@ export function mount(ctx) {
   });
   segmented(lCtl, {
     label: "Ordenar por", value: leadSort,
-    options: [{ value: "gdp", label: "Mayor PIB" }, { value: "gdp_pc", label: "PIB por habitante" }],
+    options: [{ value: "gdp", label: "Mayor PIB" }, { value: "gdp_pc", label: "PIB por habitante" }, { value: "growth", label: "Crece más" }],
     onChange: (v) => { leadSort = v; table.setColumns(leadCols(), { key: v, dir: "desc" }); },
   });
   const table = createTable(lBody, {
     caption: "PIB por lugar", columns: leadCols(), rows: leadLevel.rows, sort: { key: leadSort, dir: "desc" }, rank: true, maxHeight: 280,
     search: "Buscar por nombre",
-    onHover: (r) => { link.hover(r ? rowsHighlight(leadLevel, [r]) : null); bubbles.setHot(r ? r.key : null); },
+    onHover: (r) => { link.hover(r ? rowsHighlight(leadLevel, [r]) : null); bubbles.setHot(r ? r.key : null); scatter?.setHot(r ? r.key : null); },
     onClick: (r) => leadLevel.focus(r),
   });
 
@@ -171,10 +176,79 @@ export function mount(ctx) {
     specTable.setColumns(specCols(Math.max(1, ...list.map(lq))), { key: "lq", dir: "desc" });
     specTable.setRows(list);
     specInfo.innerHTML = `Galicia: <b>${pct(share(g, sector))}</b> de las afiliaciones (${int(g[sector.col])}) están en ${esc(sector.label.toLowerCase())}.`;
-    link.base(rowsHighlight(specLevel, list.slice(0, SPEC_TOP), { ringMax: SPEC_TOP, label: `${sector.label}: más especializadas` }));
+    link.base(specHighlight());
     secBars.setSelected(sector.key);
+    if (scatter) drawScatter();
+  }
+  function specHighlight() {
+    const list = specLevel.rows.filter((r) => fin(lq(r))).sort((a, b) => lq(b) - lq(a));
+    return rowsHighlight(specLevel, list.slice(0, SPEC_TOP), { ringMax: SPEC_TOP, label: `${sector.label}: más especializadas` });
   }
   setSector(sector.key);
+
+  // --- growth vs output -----------------------------------------------------------------------------------------
+  const scBody = section(el, { title: "Crecimiento frente a PIB", note: `Cada punto es una ciudad o una comarca: el PIB por habitante en horizontal, la variación de la población ${growthYears} en vertical y el tamaño según la población. Arrastra un rectángulo para seleccionar puntos y marcarlos en el mapa.` });
+  const scCtl = document.createElement("div");
+  scCtl.className = "adv-row";
+  scBody.appendChild(scCtl);
+  let scLevel = metros, colorBy = "lq";
+  segmented(scCtl, { label: "Puntos", value: "metros", options: levelOptions, onChange: (v) => { scLevel = data.levels[v]; scatter.setSelected(null); brushInfo.innerHTML = ""; link.base(specHighlight()); drawScatter(); } });
+  selectBox(scCtl, {
+    label: "Color", value: colorBy,
+    options: [{ value: "lq", label: "Especialización (sector elegido)" }, { value: "unemployment", label: "Paro registrado" }, { value: "none", label: "Ninguno" }],
+    onChange: (v) => { colorBy = v; drawScatter(); },
+  });
+  scatter = createScatter(scBody, {
+    points: [], height: 300,
+    x: { label: "PIB por habitante", fmt: (v) => money(v), log: true },
+    y: { label: "Variación de la población", fmt: (v) => fmtShort("signed", v) },
+    size: { label: "Habitantes", fmt: count3, max: 15, min: 2 },
+    refY: [{ v: g.growth ?? 0, label: `Galicia ${signedPct(g.growth)}` }],
+    ariaLabel: "Diagrama de dispersión: variación de la población frente a PIB por habitante",
+    onHover: (p) => { link.hover(p ? rowsHighlight(scLevel, [p.row]) : null); bubbles.setHot(p ? p.key : null); if (leadLevel === scLevel) table.setHot(p ? p.key : null, false); },
+    onClick: (p) => scLevel.focus(p.row),
+    onBrush: (set) => {
+      const sel = set ? scLevel.rows.filter((r) => set.has(r.key)) : [];
+      link.base(sel.length ? rowsHighlight(scLevel, sel, { dim: true }) : specHighlight(), { frame: sel.length > 1 });
+      brushInfo.innerHTML = sel.length ? brushSummary(sel) : "";
+    },
+  });
+  const legendEl = document.createElement("div");
+  scBody.appendChild(legendEl);
+  const brushInfo = document.createElement("div");
+  brushInfo.className = "adv-brushinfo";
+  scBody.appendChild(brushInfo);
+  function brushSummary(sel) {
+    const pop = sel.reduce((a, r) => a + (r.v.population || 0), 0);
+    const gdp = sel.reduce((a, r) => a + (r.v.gdp || 0), 0);
+    return `<b>${sel.length}</b> seleccionados · ${count3(pop)} habitantes · ${money(gdp)} de PIB (${pct(ratio(gdp, g.gdp))} de Galicia) ${frameBtn()}<button type="button" class="adv-mini" data-clear>Quitar</button>`;
+  }
+  brushInfo.addEventListener("click", (e) => {
+    if (e.target.closest("[data-clear]")) { scatter.setSelected(null); link.base(specHighlight()); brushInfo.innerHTML = ""; }
+  });
+  function drawScatter() {
+    const list = scLevel.rows.filter((r) => fin(r.v.gdp_pc) && r.v.gdp_pc > 0 && fin(r.v.growth));
+    const lqAt = (r) => ratio(share(r.v, sector), share(g, sector));
+    const cv = (r) => (colorBy === "lq" ? lqAt(r) : colorBy === "none" ? null : r.v[colorBy]);
+    let color = null, legend = "";
+    if (colorBy !== "none") {
+      const dom = robustDomain(list.map(cv), 0.03, colorBy === "lq") || [0, 1];
+      const spec = colorBy === "lq"
+        ? { type: "seq", domain: [Math.max(0.2, dom[0]), Math.max(1.5, dom[1])], log: true, ramp: RAMPS.seq }
+        : { type: "seq", domain: dom, ramp: RAMPS.heat };
+      const cs = colorScale(spec);
+      color = (c) => cs(c);
+      const f = colorBy === "lq" ? (v) => `×${dec(v, 1)}` : (v) => pct(v);
+      legend = rampLegend({ ramp: spec.ramp, domain: spec.domain, fmt: f, log: spec.log, label: colorBy === "lq" ? `Especialización en ${sector.label.toLowerCase()}` : "Parados por habitante" });
+    }
+    const labels = [...list].sort((a, b) => (b.v.population || 0) - (a.v.population || 0)).slice(0, 7).map((r) => r.key);
+    scatter.update({
+      points: list.map((r) => ({ key: r.key, x: r.v.gdp_pc, y: r.v.growth, s: r.v.population, c: cv(r), label: r.name, sub: r.sub, row: r })),
+      color, labels, colorLabel: colorBy === "none" ? null : colorBy === "lq" ? "Cociente" : "Paro",
+    });
+    legendEl.innerHTML = legend;
+  }
+  drawScatter();
 
   const covered = ratio(SECTORS.reduce((a, s) => a + (g[s.col] || 0), 0), g.affiliates);
   el.insertAdjacentHTML("beforeend", sourcesHtml(data, ["ige_pib", "ige_afiliacion", "ine_padron", "ige_comarcas"], [

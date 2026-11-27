@@ -33,6 +33,11 @@ const GLYPHS = {
     <path d="M32 11 36 28 53 32 36 36 32 53 28 36 11 32 28 28z" fill="#fff4d2" stroke="#2a1d08" stroke-width="1.4" stroke-linejoin="round"/>
     <path d="M32 11 36 28 32 32zM53 32 36 36 32 32zM32 53 28 36 32 32zM11 32 28 28 32 32z" fill="#c9a45c"/>
     <circle cx="32" cy="32" r="2.6" fill="#2a1d08"/>`,
+  // a mortarboard over a workshop cog
+  fp: `<path d="M32 12 9 23l23 11 23-11z" fill="#fff4d2" stroke="#2a1d08" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M19 31v8c3 4 8 6 13 6s10-2 13-6v-8l-13 6z" fill="#e9dcb7" stroke="#2a1d08" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M52 24v15" stroke="#2a1d08" stroke-width="1.4"/><circle cx="52" cy="42" r="2.6" fill="#ffe08a" stroke="#2a1d08" stroke-width="1.1"/>
+    <circle cx="32" cy="50.5" r="3" fill="#e0b54c" stroke="#2a1d08" stroke-width="1"/>`,
   // a merchant's balance with a coin on one pan
   commerce: `<path d="M32 15v32" stroke="#2a1d08" stroke-width="3.4" stroke-linecap="round"/><path d="M32 15v32" stroke="#fff4d2" stroke-width="1.6" stroke-linecap="round"/>
     <path d="M15 21h34" stroke="#2a1d08" stroke-width="3.6" stroke-linecap="round"/><path d="M15 21h34" stroke="#fff4d2" stroke-width="1.8" stroke-linecap="round"/>

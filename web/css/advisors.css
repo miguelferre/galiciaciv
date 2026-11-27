@@ -412,3 +412,33 @@ body.adv-tip-on #tooltip { display: none !important; }
 .adv-fire-ctl input[type=range] { flex: 1; min-width: 0; accent-color: var(--gold); }
 .adv-fire-year { min-width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); font-size: 12.5px; }
 .adv-fire-line { font-variant-numeric: tabular-nums; }
+
+/* Formación profesional advisor */
+.adv-fp-key { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; margin: 8px 0 0; }
+.adv-fp-sym { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: -1px; border: 1.5px solid rgba(10,14,22,.85); box-sizing: border-box; }
+.adv-fp-sym.pub { background: #3fb8ff; border-radius: 50%; }
+.adv-fp-sym.priv { background: #bfe9ff; border-radius: 50%; }
+.adv-fp-sym.cifp { background: #ffd36a; transform: rotate(45deg) scale(.9); }
+.adv-fp-sym.pie { width: 0; height: 0; border: 0; border-left: 5.5px solid transparent; border-right: 5.5px solid transparent; border-bottom: 10px solid #ff6b3d; }
+.adv-fp-name { font-family: var(--serif); font-size: 15px; letter-spacing: .02em; text-transform: none; color: var(--gold-bright); font-weight: normal; margin-top: 2px; }
+.adv-fp-tablewrap { margin: 6px 0 4px; max-width: 100%; overflow-x: auto; }
+.adv-fp-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px; font-variant-numeric: tabular-nums; }
+.adv-fp-cap { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.adv-fp-table th, .adv-fp-table td { padding: 4px 3px; border-bottom: 1px solid rgba(201,164,92,.14); text-align: right; vertical-align: top; overflow-wrap: anywhere; }
+.adv-fp-table thead th { font-size: 10px; letter-spacing: 0; color: var(--ink-dim); font-weight: 600; vertical-align: bottom; overflow-wrap: normal; word-break: normal; hyphens: none; padding-left: 1px; padding-right: 1px; }
+.adv-fp-table th:first-child, .adv-fp-table td:first-child { text-align: left; width: 30%; overflow-wrap: break-word; }
+.adv-fp-table th:nth-child(2) { width: 9%; }
+.adv-fp-table th:nth-child(3) { width: 12%; }
+.adv-fp-table th:nth-child(4) { width: 13%; }
+.adv-fp-table th:nth-child(5) { width: 12%; }
+.adv-fp-table th:nth-child(6) { width: 12%; }
+.adv-fp-table th:nth-child(7) { width: 12%; }
+.adv-fp-table tbody th { font-weight: normal; color: var(--ink); }
+.adv-fp-star { text-decoration: none; color: var(--gold-bright); margin-left: 2px; cursor: help; }
+.adv-fp-ratio { color: var(--ink); }
+.adv-fp-table td { white-space: nowrap; }
+.adv-fp-tag { display: block; white-space: normal; margin-top: 1px; padding: 0 3px; border-radius: 3px; font-size: 9.5px; line-height: 1.35; font-weight: 600; text-align: center; color: #1a1006; }
+.adv-fp-tag.low { background: #f0b25a; }
+.adv-fp-tag.high { background: #8fd0ee; }
+.adv-fp-notes li { margin: 2px 0; }
+.adv-fp-notes b { color: var(--ink); font-weight: 600; }

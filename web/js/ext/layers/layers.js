@@ -1,7 +1,7 @@
 // Static map layers for the map art, as factories over a model (model.js) and a switch state, so the app
 // (index.js) and the art gallery (web/dev/gallery.js) draw exactly the same thing.
 //
-//   makeLayers(model, on, {tips}) → [layer, …]   on = {roads, rail, hubs, military, wonders, trade, camino} (booleans, read live)
+//   makeLayers(model, on, {tips}) → [layer, …]   on = {roads, rail, hubs, military, wonders, trade, camino, fp} (booleans, read live)
 //
 // z slots (render/map.js Z): roads 55 and rail 56 (above rivers and borders, under city tiles), protected land 57 and
 // restricted ground 58 (hatching on hexes), ports & airports 65, forts 66, wonders 67 (above city tiles, under the fog),
@@ -192,6 +192,50 @@ export function makeLayers(model, on, { tips = {}, app = null } = {}) {
     tooltip: (it) => tips.camino?.(it.data, m, it.x, it.y) ?? null,
   };
 
+
+  // Centros de FP (z 83, under the Caminos): centres as dots (public: blue, concertados and private: pale), CIFP as larger gold
+  // diamonds, and the PIE projects as orange triangles drawn last. Sizes in css px, positions straight from fp.json (map km).
+  const fpSize = (Rpx) => Math.max(5, Math.min(15, Rpx * 0.42));
+  const fpPath = (ctx, kind, x, y, r) => {
+    ctx.beginPath();
+    if (kind === "fp-pie") { ctx.moveTo(x, y - r * 1.15); ctx.lineTo(x + r * 1.05, y + r * 0.8); ctx.lineTo(x - r * 1.05, y + r * 0.8); ctx.closePath(); }
+    else if (kind === "cifp") { ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath(); }
+    else ctx.arc(x, y, r, 0, Math.PI * 2);
+  };
+  const fpItems = () => (m.fp ? [...m.fp.centres, ...m.fp.pie] : []);
+  const fpKind = (it) => (it.kind === "fp-pie" ? "fp-pie" : it.data.type === "CIFP" ? "cifp" : "centre");
+  const fp = {
+    id: "fp", z: 83, minRpx: 1 * geo,
+    visible: () => !!on.fp && !!m.fp,
+    sig: ver,
+    draw(ctx, vp, w, o) {
+      const s = vp.s, pad = 30 / s, px = fpSize(o.Rpx);
+      ctx.lineJoin = "round";
+      for (const it of fpItems()) {
+        if (!inVp(it, vp, pad)) continue;
+        const kind = fpKind(it);
+        const r = (kind === "centre" ? px * 0.5 : kind === "cifp" ? px * 0.95 : px * 0.9) / s;
+        fpPath(ctx, kind, it.x, it.y, r + 1.6 / s);
+        ctx.fillStyle = "rgba(10,14,22,.85)";
+        ctx.fill();
+        fpPath(ctx, kind, it.x, it.y, r);
+        ctx.fillStyle = kind === "fp-pie" ? "#ff6b3d" : kind === "cifp" ? "#ffd36a" : it.data.ownership === "publica" ? "#3fb8ff" : "#bfe9ff";
+        ctx.fill();
+      }
+    },
+    hit: (x, y, Rpx) => {
+      const s = Rpx / grid().R, px = fpSize(Rpx);
+      const list = fpItems();
+      for (let k = list.length - 1; k >= 0; k--) {
+        const it = list[k], kind = fpKind(it);
+        const r = ((kind === "centre" ? px * 0.5 : px * 0.95) + 3) / s;
+        if ((it.x - x) ** 2 + (it.y - y) ** 2 <= r * r) return { kind: it.kind, data: it.data };
+      }
+      return null;
+    },
+    tooltip: (it) => (it.kind === "fp-pie" ? tips.fpPie?.(it.data, m) : tips.fpCentre?.(it.data, m)) ?? null,
+  };
+
   // Name plates under the forts (major ones, close in) and wonders, laid out together in one pass (wonders first, by
   // rank), so no two overlap; each keeps clear of where city banners stand and, in the City View, of the hexes that
   // hold a district plaque.
@@ -272,5 +316,5 @@ export function makeLayers(model, on, { tips = {}, app = null } = {}) {
     o.world();
   }
 
-  return [roads, rail, protectedLand, restricted, hubs, forts, wonders, plates, camino, trade];
+  return [roads, rail, protectedLand, restricted, hubs, forts, wonders, plates, camino, fp, trade];
 }

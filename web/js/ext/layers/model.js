@@ -65,7 +65,7 @@ export function createModel(w) {
   const geo = () => w.grid.R / REF_KM;
   const m = {
     w, version: 0, data: {},
-    net: null, ports: [], airports: [], installations: [], ranges: [], parks: [], wonders: [], routes: [], camino: null,
+    net: null, ports: [], airports: [], installations: [], ranges: [], parks: [], wonders: [], routes: [], camino: null, fp: null,
     rangeById: new Map(),
     _vis: new Map(),
   };
@@ -99,12 +99,24 @@ export function createModel(w) {
       m.routes = data ? prepareRoutes(w, data) : [];
     } else if (name === "camino") {
       m.camino = data ? prepareCamino(data) : null;
+    } else if (name === "fp") {
+      m.fp = data ? prepareFp(data) : null;
     }
     place(m);
     m._vis.clear();
     m.version++;
   };
   return m;
+}
+
+/** fp.json → {centres, pie, families: Map(id → name)}: points in map km, the ones to draw last (CIFP) at the end. */
+function prepareFp(d) {
+  const families = new Map((d.families || []).map((f) => [f.id, f.name]));
+  const ok = (p) => Number.isFinite(p.x) && Number.isFinite(p.y);
+  const rank = (c) => (c.type === "CIFP" ? 2 : 1);
+  const centres = (d.centres || []).filter(ok).map((c) => ({ kind: "fp-centre", data: c, x: c.x, y: c.y })).sort((a, b) => rank(a.data) - rank(b.data));
+  const pie = (d.pie || []).filter(ok).map((p) => ({ kind: "fp-pie", data: p, x: p.x, y: p.y }));
+  return { centres, pie, families };
 }
 
 /** camino.json → {routes: Map(id → route), lines: [{routes, pts, color, path, bbox}], byConcello}. Each line takes the colour of its first route. */

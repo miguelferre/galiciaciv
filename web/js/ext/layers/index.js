@@ -17,6 +17,7 @@ const TOGGLES = [
   { id: "wonders", label: "Maravillas", icon: "w-landmark", def: true, title: "Patrimonio Mundial, monumentos BIC y parque nacional", layers: ["wonders", "protected", "plates"] },
   { id: "trade", label: "Comercio y movilidad", icon: "t-trade", def: false, title: "Los mayores flujos diarios de viajes entre comarcas (MITMA)", layers: ["trade"] },
   { id: "camino", label: "Camino de Santiago", icon: "t-road", def: false, title: "Trazado de los Caminos de Santiago en Galicia (IGN-CNIG, datos de la FEAACS), como ayuda a la marcha", layers: ["camino"] },
+  { id: "fp", label: "Centros de FP", icon: "FP", def: false, title: "Centros con oferta de Formación Profesional 2026-27 (Xunta de Galicia) y proyectos industriales estratégicos (PIE)", layers: ["fp"] },
 ];
 
 export function install(app) {
@@ -40,6 +41,7 @@ export function install(app) {
       set: (v) => {
         on[t.id] = !!v;
         if (t.id === "camino" && on.camino && !model.camino) load("camino");
+        if (t.id === "fp" && on.fp && !model.fp) load("fp");
         app.requestDraw();
       },
     });
@@ -49,6 +51,9 @@ export function install(app) {
   // camino.json is fetched only when the Camino de Santiago switch is first turned on (or an advisor already loaded it).
 
   if (app.data.camino) apply("camino", app.data.camino);
+  // fp.json: fetched when the switch is first turned on (or an advisor already loaded it). A shared link with layers=fp turns it on after this.
+  if (app.data.fp) apply("fp", app.data.fp);
+  app.on?.("data", ({ name, data }) => { if (name === "fp" && data && !model.fp) apply("fp", data); });
 
   // For debugging and the gallery: the model and switches.
   app.mapArt = { model, on, layers };

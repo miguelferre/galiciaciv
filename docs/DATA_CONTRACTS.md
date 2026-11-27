@@ -47,6 +47,7 @@ Para resolver una comarca en el navegador se usa `stateIndex(w, ref)` de `world.
 | `infrastructure.json` | `infrastructure` | tras el primer fotograma | `ext/layers`, `advisors` | builder |
 | `wonders.json` | `wonders` | tras el primer fotograma | `ext/layers`, `advisors` | builder |
 | `trade.json` | `trade` | tras el primer fotograma | `ext/layers`, `advisors` | builder |
+| `fp.json` | `fp` | a petición (asesor de Formación profesional) | por escribir | builder (`check` de `build/fp.py`) |
 | `relief3d_detalle.bin` | `tools/prep_relief3d.py` | al pedirlo la vista 3D | `ext/relief3d/terrain.js` | nadie |
 
 * **Núcleo**: `main.js` lo carga antes de dibujar. Si falta un opcional, el visor sigue (`lenses` vacío, `sources` `[]`,
@@ -406,8 +407,49 @@ Viajes de personas entre comarcas (MITMA, **un solo día laborable**, 12 de marz
 - Los perímetros de un año se unen antes de repartir: un fuego solapado cuenta una vez dentro del año. Entre años no hay unión.
 - Builder: REQUIRES `_world`, `effis`; PRODUCES `fires.json`.
 
+## fp.json (al abrir el asesor de Formación profesional)
+
+Salida CC BY-SA 4.0 (deriva de Abert@s). Builder `fp`; REQUIRES `_world`, `ign_limites`, `ige_comarcas`, `ige_poboacion`,
+`ige_unidades`, `xunta_centros`, `xunta_oferta_fp`, `xunta_pie`; PRODUCES `fp.json`. Cifras de 2026-11-27 (no son reglas).
+
+```
+{ version: 1,
+  vintage: "texto con fecha de cada fuente",
+  sources: ["xunta_centros","xunta_oferta_fp","xunta_pie","ige_unidades","ige_poboacion","ige_comarcas","ign_limites"],
+  license: "CC BY-SA 4.0",
+  attribution: "Fonte dos datos: Xunta de Galicia (...) · Fonte: Xunta de Galicia, Consellería de Educación (...) · ...",  // texto a mostrar
+  rule: "texto del método",
+  limits: ["plazas = curso completo ordinario...", ...],          // avisos para mostrar junto a las cifras
+  est_years: [2014, 2024],                                         // años de las claves est_2014 y est_2024
+  thresholds: { est_min_share: 0.02, trend_min_units: 10 },
+  families: [{ id: "SAN", name: "Sanidad", places: 1234, centres: 40, note?: "por qué la cifra de empresas queda corta" }],  // 27, orden por id
+  bridge: { "86": [["SAN", 0.9], ["SSC", 0.1]], ... },             // división CNAE-09 -> [familia, peso]; [] sin familia
+  centres: [{ code: "15021430", name, type: "CIFP"|"IES"|"otro", type_code: "CPR", ownership: "publica"|"privada",
+              concertado: bool, address, concello: "15036", comarca: "1508", x, y /*km del mapa*/, lon, lat,
+              located: "point"|"concello", places: 0,
+              offer: [{ family: "FME", grade: "basico"|"medio"|"superior"|"especializacion", level: "basico"|"medio"|"superior",
+                        cycle: "nombre", places: 30, shift: "manana"|"tarde", code: "D3FME000100" }] }],    // solo centros con oferta
+  by_comarca: { "1508": {                                          // 53, clave = fips de 4 cifras
+      name, abbr, centres: 13, young_15_24: 13676, places: 1839, places_per_1000: 134.5,
+      by_grade: { basico, medio, superior, especializacion },      // plazas
+      by_family: { "FME": { places, offer_share, est_share, ratio, est_2014, est_2024, trend } },
+      nearest_km: { "SAN": 0.0 } } },
+  galicia: { centres, cifp, young_15_24, places, places_per_1000, by_grade, by_family, establishments: { first, last, mapped_to_family_last } },
+  pie: [{ company, project, concello: "15001", concellos: [...], comarca, x, y, investment_meur, jobs_total, jobs_note,
+          status, status_text, dog: [url], families: ["FME",...], concello_note }] }
+```
+
+* `places`: plazas del primer curso, curso completo ordinario 2026-27 (el dossier de la Consellería da 29 071; el PDF suma 29 059). No incluyen modular, dual intensiva, acelerada ni semipresencial.
+* `young_15_24`: grupos 15-19 y 20-24 del padrón (IGE 144, 2025), sumados por comarca. `places_per_1000 = places / young_15_24 * 1000` (1 decimal); los centros cuentan donde están, no donde vive el alumno.
+* `by_family` solo trae familias con plazas o con empresas en la comarca. `offer_share` = plazas de la familia entre plazas de la comarca (`null` sin plazas). `est_share` = establecimientos de la familia (IGE 9002, repartidos con `bridge`) entre los de la comarca que tienen familia. `ratio = offer_share / est_share`, `null` si `est_share < thresholds.est_min_share` o no hay plazas (1 = oferta como el tejido de empresas). `est_2014` y `est_2024` son establecimientos ponderados (decimales); `trend = est_2024 / est_2014 - 1`, `null` si `est_2014 < thresholds.trend_min_units`.
+* `nearest_km`: km en línea recta del centro de población de la comarca (centros de concello ponderados por habitantes) al centro más cercano que ofrece la familia (cualquier grado). Una entrada por familia ofrecida en Galicia; 0 no es «hay centro en la comarca»: mirar `by_family[f].places`.
+* `bridge` es criterio propio (la tabla del INCUAL no se puede reutilizar): sirve para comparar, no para medir. El directorio no incluye el sector primario ni la administración: `families[].note` avisa de las familias afectadas (AGA, MAP, SAN, SSC, IAD).
+* `centres[].located = "concello"`: sin coordenadas fiables; el centro va en el centro de su concello. Si el punto y el nombre de concello del directorio no coinciden, manda el nombre.
+* `pie[].jobs_total` es el empleo total anunciado (directo más indirecto), no el empleo directo. `x`,`y` son el centro del concello (la media si son varios), no la parcela. `families` es criterio propio por tipo de proyecto. `status`: `aprobado`, `declarado`, `ambiental_finalizada`, `informacion_publica_finalizada`, `en_tramitacion_ambiental`.
+* `check()` valida: claves y licencia, 27 familias de `bridge`, 53 comarcas de `world.json`, centros completos y dentro del mapa, sumas de plazas, centros y jóvenes iguales entre centros, comarcas y Galicia, `places_per_1000` y `ratio` recalculados, `offer_share` suma 1, `est_share` suma 1, `nearest_km` en rango, PIE en el mapa. Avisa (WARN) si cambian 216 centros, 28 CIFP o ~29 000 plazas.
+
 ## sources.json
-Bibliografía generada por `build/catalog.py` desde el registro de fuentes y sus manifiestos (hoy 28).
+Bibliografía generada por `build/catalog.py` desde el registro de fuentes y sus manifiestos (hoy 32).
 ```jsonc
 [{"id", "title", "publisher", "homepage", "license", "description", "used_for": [], "vintage",
   "files": [{"file", "url", "retrieved", "sha256", "bytes"}]}]

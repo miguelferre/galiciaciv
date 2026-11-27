@@ -8,7 +8,48 @@ const sign = (x) => (x > 0 ? "+" : x < 0 ? "−" : "±");
 
 const dec = (x, d = 1) => x.toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d });
 
+/** Plain-Spanish stage of a PIE project (fp.json pie[].status). */
+export const FP_STATUS = {
+  aprobado: "Aprobado definitivamente",
+  declarado: "Declarado PIE, pendiente de aprobación",
+  ambiental_finalizada: "Evaluación ambiental terminada",
+  informacion_publica_finalizada: "Información pública terminada",
+  en_tramitacion_ambiental: "En tramitación ambiental",
+};
+const FP_TYPE = { CIFP: "Centro integrado de FP (CIFP)", IES: "Instituto de educación secundaria (IES)" };
+
 export const tips = {
+  // A centre with FP offer: its top families by places (cycles = rows of the offer, one per cycle and shift).
+  fpCentre(c, m) {
+    const raw = m.w.raw;
+    const conc = raw.counties?.find((x) => x.geoid === c.concello)?.name;
+    const kind = FP_TYPE[c.type] || `Centro (${c.type_code})`;
+    const own = c.ownership === "publica" ? "público" : c.concertado ? "privado concertado" : "privado";
+    const lines = [`<b>${esc(c.name)}</b>`, muted(`${esc(kind)} · ${own}${conc ? ` · ${esc(conc)}` : ""}`)];
+    const by = new Map();
+    for (const o of c.offer || []) {
+      const e = by.get(o.family) || { n: 0, p: 0 };
+      e.n++;
+      e.p += o.places || 0;
+      by.set(o.family, e);
+    }
+    const top = [...by].sort((a, b) => b[1].p - a[1].p).slice(0, 3);
+    for (const [f, e] of top) lines.push(`${esc(m.fp?.families.get(f) || f)}: ${e.n} ${e.n === 1 ? "ciclo" : "ciclos"}, ${int(e.p)} plazas`);
+    if (by.size > top.length) lines.push(muted(`y ${by.size - top.length} ${by.size - top.length === 1 ? "familia más" : "familias más"}`));
+    lines.push(`<b>${int(c.places)}</b> plazas de primer curso en 2026-27`);
+    lines.push(muted("Curso completo ordinario. Xunta de Galicia."));
+    return lines.join("<br>");
+  },
+  fpPie(p, m) {
+    const conc = m.w.raw.counties?.find((x) => x.geoid === p.concello)?.name;
+    const lines = [`<b>${esc(p.company)}</b>`, muted(`Proyecto industrial estratégico${conc ? ` · ${esc(conc)}` : ""}`)];
+    if (p.project) lines.push(esc(p.project));
+    if (p.jobs_total != null) lines.push(`<b>${int(p.jobs_total)}</b> empleos anunciados (directos e indirectos)`);
+    lines.push(esc(FP_STATUS[p.status] || p.status_text || ""));
+    if (p.jobs_note) lines.push(muted(esc(p.jobs_note)));
+    lines.push(muted("Posición: centro del concello, no la parcela."));
+    return lines.join("<br>");
+  },
   // Ports and airports carry no traffic figures: Puertos del Estado and Aena require prior written authorisation.
   port(p) {
     const lines = [`<b>Puerto de ${esc(p.name)}</b>`];

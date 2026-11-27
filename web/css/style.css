@@ -203,6 +203,8 @@ kbd {
 .btn-ext.active, .btn-ext[aria-pressed="true"] { background: linear-gradient(180deg, #5a4a24, #3a2f15); border-color: var(--gold-bright); }
 /* Extension buttons cost top-bar room: their labels go first, then (body.tb-ext) the brand text gives way. */
 @media (max-width: 1720px) { .btn-ext .lbl { display: none; } .btn-ext { padding: 4px 7px; } body.tb-ext .turn { display: none; } }
+/* The advisors button keeps its label on any desktop width (the yields row gives way if the bar runs short). */
+@media (min-width: 701px) { #topbar #btn-advisors .lbl { display: inline; } }
 @media (max-width: 1320px) and (min-width: 701px) { body.tb-ext .brand-text { display: none; } }
 /* A docked dashboard plus the minimap leave the lens dock no room on smaller desktops: drop the minimap. */
 @media (max-width: 1360px) and (min-width: 701px) {

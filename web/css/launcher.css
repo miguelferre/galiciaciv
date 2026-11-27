@@ -1,0 +1,82 @@
+/* Advisors launcher (web/js/ext/advisorsLauncher). Loaded by the extension itself. */
+
+#adv-launcher[hidden], #adv-launcher [hidden] { display: none; }
+#adv-launcher button { font: inherit; cursor: pointer; }
+#adv-launcher button:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 1px; }
+#adv-launcher p { margin: 0; text-wrap: pretty; }
+#adv-launcher .adv-emblem { flex: none; }
+.al-fig { font-family: var(--serif); color: #fff4d2; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.al-cta {
+  border: 1px solid var(--gold-bright); border-radius: 6px; background: #4a3d1f; color: var(--gold-bright);
+  transition: background-color 60ms;
+}
+#adv-launcher .al-cta { font-size: 12.5px; }
+.al-cta:hover { background: #6a5628; transition-duration: 80ms; }
+
+/* ---------- desktop: a list at the top left ---------- */
+@media (min-width: 701px) {
+  #adv-launcher {
+    position: fixed; left: 12px; top: calc(var(--topbar-h) + 12px); z-index: 11; width: 236px; padding: 10px 8px 10px;
+    max-height: var(--al-max, none); overflow-y: auto; scrollbar-width: thin;
+  }
+  .al-head { padding: 0 6px 6px; }
+  .al-head h2 {
+    margin: 0; font: normal 15px var(--serif); letter-spacing: .14em; text-transform: uppercase; color: var(--gold-bright);
+    text-wrap: balance;
+  }
+  .al-head p { color: var(--ink-dim); font-size: 11px; }
+  .al-list { list-style: none; margin: 0; padding: 0; }
+  .al-list .adv-emblem { width: 28px; height: 28px; }
+  .al-list button {
+    display: flex; align-items: center; gap: 9px; width: 100%; padding: 2px 6px; border: none; border-radius: 6px;
+    background: transparent; text-align: left; transition: background-color 60ms;
+  }
+  #adv-launcher .al-list button { font-family: var(--serif); font-size: 15px; color: var(--gold-bright); }
+  .al-list button:hover, .al-list button:focus-visible { background: rgba(201,164,92,.18); transition-duration: 80ms; }
+  .al-find { margin-top: 8px; padding: 10px 6px 0; border-top: 1px solid rgba(201,164,92,.35); }
+  .al-fig { font-size: 24px; }
+  .al-txt { font-size: 12px; color: var(--ink); }
+  #adv-launcher .al-src { margin-top: 2px; font-size: 10.5px; color: var(--ink-dim); }
+  .al-cta { margin-top: 8px; padding: 5px 12px; }
+  .al-mark, .al-short, .al-all { display: none; }
+  #adv-launcher.al-compact .al-find { display: none; }
+  #adv-launcher.al-compact .al-list button { padding-top: 1px; padding-bottom: 1px; }
+  #adv-launcher.al-compact .al-list .adv-emblem { width: 24px; height: 24px; }
+  #adv-launcher.al-compact .al-list button { font-size: 14px; }
+}
+/* A narrow window: medallions only, so the list does not cover the west coast. The name is in the tooltip. */
+@media (min-width: 701px) and (max-width: 1099px) {
+  #adv-launcher { width: auto; padding: 6px; }
+  .al-head, .al-find { display: none; }
+  .al-list span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .al-list button { justify-content: center; }
+}
+
+/* ---------- phones: a card above the lens dock ---------- */
+@media (max-width: 700px) {
+  #adv-launcher { order: -2; margin: 0 8px; padding: 10px 12px; }
+  .al-head, .al-list, .al-src, .al-long { display: none; }
+  .al-find {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "mark fig cta" "mark txt cta";
+    column-gap: 10px; align-items: center; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid rgba(201,164,92,.35);
+  }
+  .al-mark { grid-area: mark; display: flex; }
+  .al-fig { grid-area: fig; font-size: 21px; }
+  .al-txt { grid-area: txt; font-size: 12px; color: var(--ink); }
+  .al-cta { grid-area: cta; min-width: 48px; min-height: 36px; padding: 5px 12px; }
+  .al-all { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 36px; padding: 0; border: none; background: none; text-align: left; }
+  .al-faces { display: flex; }
+  .al-faces .adv-emblem + .adv-emblem { margin-left: -9px; }
+  #adv-launcher .al-all b { flex: 1; font: normal 13px var(--serif); letter-spacing: .14em; text-transform: uppercase; color: var(--gold-bright); }
+  .al-go { color: var(--gold-bright); font-size: 18px; }
+
+  /* The card gives way to the map's own panels. A legend on screen leaves room only for the medallion row. */
+  body.panel-open #adv-launcher, body.dock-open #adv-launcher, body.minimap-on #adv-launcher { display: none; }
+  #lens-area:has(> #lens-picker:not([hidden])) > #adv-launcher,
+  #lens-area:has(> .map-layers-pop:not([hidden])) > #adv-launcher { display: none; }
+  #lens-area:has(> #legend:not([hidden])) .al-find { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .al-cta, .al-list button { transition: none; }
+}

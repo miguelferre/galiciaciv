@@ -20,7 +20,10 @@ export function renderTopbar(nation) {
   if (typeof ResizeObserver === "function") new ResizeObserver(check).observe(el);
   check();
   watchBarOverflow(document.getElementById("topbar"));
-  document.getElementById("turn").innerHTML = `Año <b>${esc(nation.year ?? "")}</b> · ${esc(nation.vintage || "")}`;
+  // Only the year: the vintage (one clause per source) is over 1300 px long and pushed the buttons off the screen.
+  const turn = document.getElementById("turn");
+  turn.innerHTML = `Año <b>${esc(nation.year ?? "")}</b>`;
+  turn.title = nation.vintage || "";
 }
 
 // Phones scroll the whole bar sideways. Mark which ends have more to show (.more-l / .more-r) so CSS can fade

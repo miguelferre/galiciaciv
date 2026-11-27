@@ -2,6 +2,7 @@
 // Each is an ordinary lens object ({id, name, ramp, domain, scale, format, values: per cell}) that app.setLens()
 // accepts; they are built once per data model and cached, so the lens dock's histogram cache stays valid.
 import { fin, quantile, ratio, RAMPS } from "./util.js";
+import { fpPlacesLens } from "./fp.js";
 import { caminoLens } from "./camino.js"; // camino.js imports countyLens from here: a cycle, safe because both only call at run time
 
 const SCIENCE_RAMP = ["#0a1a33", "#173a6b", "#2f63a8", "#4f93d6", "#8cc2ee", "#e4f3ff"];
@@ -130,6 +131,7 @@ export function fireYearLens(data, fires, year) {
 export function lensFromId(data, id) {
   const fy = /^adv-fire-(\d{4})$/.exec(id);
   if (fy) return data.app.loadData("fires").then((fires) => (fires ? fireYearLens(data, fires, Number(fy[1])) : null)).catch(() => null);
+  if (id === "adv-state-fp-places") return data.app.loadData("fp").then((fp) => (fp ? fpPlacesLens(data, fp) : null)).catch(() => null);
   if (id === "adv-science-share") return scienceLens(data);
   if (id === "adv-state-culture-branch") return cultureLens(data);
   if (id === "adv-county-camino_km") return caminoLens(data);

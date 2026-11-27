@@ -8,10 +8,11 @@ const ALL = {
   advisors: "./advisors/index.js", // the advisor dashboards: counties, districts, citizens and trade JSON
   layers: "./layers/index.js", // roads, rail, ports, wonders, trade routes: infrastructure, wonders and trade JSON
   relief3d: "./relief3d/index.js", // full-screen 3D relief (D-003): world.json, lenses.json and relief3d_detalle.bin
+  advisorsLauncher: "./advisorsLauncher/index.js", // the advisors' entry on the map itself; needs advisors and fires.json
 };
 // galiciaciv (D-002, D-003): every extension has its data since tanda 3. There is no military data, so no military
 // layer or advisor. Order matters: each one adds its top-bar button as it installs.
-export const ENABLED = ["layers", "cityView", "advisors", "relief3d"];
+export const ENABLED = ["layers", "cityView", "advisors", "advisorsLauncher", "relief3d"];
 export const isEnabled = (name) => ENABLED.includes(name);
 const MODULES = ENABLED.map((name) => ALL[name]).filter(Boolean);
 

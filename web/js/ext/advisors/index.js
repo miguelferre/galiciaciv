@@ -20,6 +20,7 @@ export const ADVISORS = [
   { id: "people", name: "Población", role: "Oficina del censo", color: "#c46a4f", dark: "#3a140c", blurb: "Dónde vive la gente, qué edad tiene y dónde nació.", load: () => import("./views/people.js") },
   { id: "prosperity", name: "Prosperidad", role: "Mayordomía del hogar", color: "#3f9c82", dark: "#082a22", blurb: "Renta por persona, desigualdad y paro registrado.", load: () => import("./views/prosperity.js") },
   { id: "knowledge", name: "Conocimiento", role: "Academia real", color: "#4a86d6", dark: "#0a1c3a", blurb: "Estudios, ocupaciones y la rama más cercana al trabajo científico.", load: () => import("./views/knowledge.js") },
+  { id: "fp", name: "Formación profesional", role: "Gremio de oficios", color: "#e0653f", dark: "#3a1208", blurb: "Qué ciclos se enseñan, dónde, y si cuadran con las empresas de cada comarca.", load: () => import("./views/fp.js") },
   { id: "land", name: "Territorio", role: "Agrimensura mayor", color: "#6e9a3c", dark: "#18280a", blurb: "Suelo, clima, incendios y zonas inundables.", load: () => import("./views/land.js") },
   { id: "commerce", name: "Comercio", role: "Maestría del comercio", color: "#2fa4b8", dark: "#062630", blurb: "Un día de viajes entre comarcas, los puertos, los aeropuertos y las vías.", load: () => import("./views/commerce.js") },
   { id: "culture", name: "Cultura", role: "Custodia de las maravillas", color: "#c25b9a", dark: "#2e0c22", blurb: "Patrimonio Mundial, bienes de interés cultural, el parque nacional y el Camino de Santiago.", load: () => import("./views/culture.js") },
@@ -30,7 +31,7 @@ const byId = new Map(ADVISORS.map((a) => [a.id, a]));
 const COUNCIL = (() => {
   const g = [
     { label: "Riqueza y trabajo", ids: ["economy", "prosperity", "commerce", "energy"] },
-    { label: "Gente y territorio", ids: ["people", "knowledge", "culture", "land"] },
+    { label: "Gente y territorio", ids: ["people", "knowledge", "fp", "culture", "land"] },
     { label: "Tus preguntas", ids: ["explorer"] },
   ];
   const listed = new Set(g.flatMap((x) => x.ids));

@@ -49,7 +49,9 @@ svg.icon { display: inline-block; flex: none; }
   font-variant-numeric: tabular-nums;
 }
 .brand { font-family: var(--serif); font-weight: bold; letter-spacing: .14em; text-transform: uppercase; color: var(--gold-bright); white-space: nowrap; display: flex; align-items: center; flex: none; }
-.brand-emblem { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #2a4d8f; border: 1px solid var(--gold); color: #fff; font-size: 13px; margin-right: 6px; box-shadow: 0 0 0 2px rgba(0,0,0,.4); }
+/* The flag of Galicia (civil flag, without the arms: they do not read at this size). */
+.brand-emblem { display: inline-block; line-height: 0; border: 1px solid var(--gold); border-radius: 2px; overflow: hidden; margin-right: 6px; box-shadow: 0 0 0 2px rgba(0,0,0,.4); }
+.brand-emblem svg { display: block; }
 .yields { display: flex; gap: 14px; flex: none; }
 .yield {
   position: relative; display: flex; align-items: center; gap: 5px; font-weight: 600; font-size: 14px; white-space: nowrap; cursor: pointer; border-radius: 4px;

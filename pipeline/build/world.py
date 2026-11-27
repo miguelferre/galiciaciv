@@ -7,7 +7,7 @@ so the other builders can drop their data onto the same hexes.
 from __future__ import annotations
 
 import math
-from collections import Counter
+from collections import Counter, deque
 
 from ..core.geo import MapProjection, Shape, ShapeIndex
 from ..core.hexgrid import SQRT3, HexGrid
@@ -31,6 +31,7 @@ TIDAL_SEA_SHARE = 0.5  # share of elevation samples below 0 m that keeps a sea-c
 # about the real area of the mapped reservoirs (a plain majority left Belesar and Portas with two hexes each).
 LAKE_MIN_POINTS = 3
 COAST_DEPTH_M = -200
+INLAND_SEA_KM = 10  # a sea pocket cut off from the open sea and farther than this (hex steps) is a lake
 WATER_TABLE = [
     {"id": LAND, "name": "Tierra", "rule": "Al menos 4 de los 7 puntos de muestra de la casilla (centro + 6) caen en un concello gallego o en el contorno de una tierra vecina (Asturias, León, Zamora, Portugal), salvo que el centro sea mar y la altitud media esté a nivel del mar o por debajo, o lo estén al menos la mitad de sus muestras (las rías siguen como agua)."},
     {"id": OCEAN, "name": "Océano", "color": "#1b4266", "rule": "Mar de más de 200 m de profundidad y sin tierra al lado."},
@@ -464,6 +465,42 @@ def build() -> None:
                 near_land = any(water[j] == LAND for j in grid.neighbours(i))
                 water[i] = COAST if near_land or elev[i] > COAST_DEPTH_M else OCEAN
     print(f"    {no_elev} hexes without elevation samples; {valley_floor} valley-floor hexes eased one relief class")
+
+    # Inland water that no outline covers (reservoirs that the neighbours' outlines leave out, the Miño between Galicia
+    # and Portugal) comes out as sea. A sea pocket cut off from the open sea and more than INLAND_SEA_KM hexes away from
+    # it is a lake. The cut-off inner rías and river mouths (Ferrol, O Barqueiro, the Ulla, the Miño) lie 2 to 5 hexes
+    # away and stay sea; the inland pockets lie 26 or more (measured 2026-11-27).
+    seen, pockets = set(), []
+    for i in range(grid.size):
+        if water[i] in (OCEAN, COAST) and i not in seen:
+            seen.add(i)
+            stack, comp = [i], []
+            while stack:
+                j = stack.pop()
+                comp.append(j)
+                for k in grid.neighbours(j):
+                    if water[k] in (OCEAN, COAST) and k not in seen:
+                        seen.add(k)
+                        stack.append(k)
+            pockets.append(comp)
+    pockets.sort(key=len, reverse=True)
+    dist = [None] * grid.size  # hex steps from the open sea (the largest sea pocket)
+    queue = deque(pockets[0] if pockets else [])
+    for j in queue:
+        dist[j] = 0
+    while queue:
+        j = queue.popleft()
+        for k in grid.neighbours(j):
+            if dist[k] is None:
+                dist[k] = dist[j] + 1
+                queue.append(k)
+    inland = 0
+    for comp in pockets[1:]:
+        if min(dist[j] for j in comp) > INLAND_SEA_KM:
+            for j in comp:
+                water[j] = LAKE
+            inland += len(comp)
+    print(f"    {inland} inland sea hexes turned into lakes ({len(pockets) - 1} pockets cut off from the open sea)")
 
     # --- land cover from WorldCover (prepared by tools/prep_raster.py; a lon/lat grid, codes already NLCD-style) ---
     rows, legend = cov["rows"], cov["legend"]

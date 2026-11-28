@@ -79,7 +79,7 @@ svg.icon { display: inline-block; flex: none; }
 .btn-icon { padding: 4px 7px; }
 /* GL | ES selector (i18n.js): two joined buttons, the current one in gold. */
 .lang-seg { display: inline-flex; flex: none; border: 1px solid var(--gold); border-radius: 4px; overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0,0,0,.5); }
+  box-shadow: 0 1px 2px rgba(0,0,0,.5); margin-left: -10px; } /* -10px: 6px from the buttons, as inside .tb-buttons */
 .lang-btn { background: linear-gradient(180deg, #3a5068, #223244); border: 0; padding: 4px 7px; cursor: pointer;
   font-family: var(--serif); font-size: 12px; line-height: 18px; color: var(--ink-dim); min-width: 30px; }
 .lang-btn + .lang-btn { border-left: 1px solid var(--gold); }
@@ -498,6 +498,8 @@ body.panel-open #lens-area { right: calc(394px + var(--dock-right, 0px)); }
   .brand-text { display: none; }
   .spacer { display: none; }
   .search { flex: 0 0 160px; min-width: 160px; order: -1; margin-left: 4px; }
+  /* The bar scrolls: the language goes right after the search, inside the first screen. */
+  .lang-seg { order: -1; margin-left: 0; }
   .brand { order: -2; }
   .search-kbd { display: none; }
   .yields { gap: 10px; }

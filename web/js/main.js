@@ -869,7 +869,8 @@ async function main() {
 
   // Language: the GL | ES selector in the top bar; #lang= only when someone chose it (i18n.js).
   url.register("lang", langHashKey());
-  mountLangSwitch(document.querySelector("#topbar .tb-buttons"));
+  // Its own child of #topbar, not inside .tb-buttons: on a phone the bar scrolls, and CSS moves it next to the search.
+  mountLangSwitch(document.getElementById("topbar"));
 
   // Map layer switches (app.ui.addMapToggle), in a menu next to the Resources toggle; kept in the hash (layers=).
   const mapToggles = createMapToggles({
